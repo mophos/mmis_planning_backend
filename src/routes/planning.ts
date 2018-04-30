@@ -209,6 +209,7 @@ router.post('/process', async (req, res, next) => {
       obj.create_by = req.decoded.people_user_id;
       data.push(obj);
     }
+    await planningModel.clearPlanningTmp(db, _uuid);
     await planningModel.insertPlanningTmp(db, data);
     res.send({ ok: true });
   } catch (error) {
