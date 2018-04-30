@@ -1,0 +1,66 @@
+include css.pug
+style(media='print').
+  @page { size: landscape; }
+doctype html
+html(lang='en')
+  head
+    meta(charset="utf-8")
+    title report
+  body
+    button.btn.btn-sm.btn-success(onclick='window.print()') Print
+    table.table
+      thead
+        tr
+          td.center.bold(colspan='19') #{hospitalName}
+        tr
+          td.center.bold(colspan='19') แผนปฏิบัติการสั่งซื้อ
+        tr
+          td.center.bold(colspan='19') ประจำปีงบประมาณ #{planningYear}
+        tr
+          td.left(colspan='19') ณ วันที่ #{today}
+        tr
+          th(rowspan='2') ลำดับที่
+          th(rowspan='2') รายการยา
+          th(rowspan='2') ประเภท
+          th.right(rowspan='2') ขนาดบรรจุ
+          th(colspan='3') อัตรการใช้ย้อนหลัง 3 ปี
+          th.right(rowspan='2') ประมาณการใช้<br>ในปี #{planningYear}
+          th.right(rowspan='2') คงเหลือ<br>ณ #{todayAmount}
+          th.right(rowspan='2') ประมาณการซื้อ<br>ในปี #{planningYear}
+          th.right(rowspan='2') ราคาต่อหน่วย(บาท)
+          th.center(rowspan='2') งวดที่ 1<br>(ต.ค.-ธ.ค.)
+          th.center(rowspan='2') งวดที่ 2<br>(ม.ค.-มี.ค.)
+          th.center(rowspan='2') งวดที่ 3<br>(เม.ย.-มิ.ย.)
+          th.center(rowspan='2') งวดที่ 4<br>(ก.ค.-ก.ย.)
+          th(colspan='2') ยอดรวมจัดซื้อ
+        tr
+          th #{planningYear-3}
+          th #{planningYear-2}
+          th #{planningYear-1}
+          th จำนวน
+          th มูลค่า
+      tbody
+      - var y=0
+        for p in planning
+          - y++
+          tr
+            td #{y}
+            td #{p.generic_name}
+            td #{p.generic_type_name}
+            td.right #{p.unit_desc}
+            td.right #{p.rate_3_year}
+            td.right #{p.rate_2_year}
+            td.right #{p.rate_1_year}
+            td.right #{p.estimate_qty}
+            td.right #{p.stock_qty}
+            td.right #{p.estimate_buy}
+            td.right #{p.unit_cost}
+            td.right #{p.q1}
+            td.right #{p.q2}
+            td.right #{p.q3}
+            td.right #{p.q4}
+            td.right #{p.qty}
+            td.right #{p.amount}
+      tfooter 
+        tr
+          td.tbfooter(colspan='19')
