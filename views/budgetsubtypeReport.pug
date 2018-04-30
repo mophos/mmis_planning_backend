@@ -1,0 +1,39 @@
+include css.pug
+doctype html
+html(lang='en')
+  head
+    meta(charset="utf-8")
+    title report
+  body
+    button.btn.btn-sm.btn-success(onclick='window.print()') Print
+    div(style='text-align: center; font-size: 16pt;')
+      p(style="font-weight: bold;") รายงานงบประมาณย่อย
+      | ปีงบประมาณ #{year}
+      br
+      | ณ วันที่ #{today}
+      br
+      br
+    table.table(style="font-size: 16pt;")
+      thead
+        th ลำดับ
+        th หมวดงบประมาณ
+        th หมวดงบประมาณย่อย
+        th จำนวนเงินที่จัดสรร
+        th จำนวนเงินที่ใช้ไป
+        th จำนวนเงินคงเหลือ
+        th คงเหลือ (%)
+      tbody
+      - var y=0
+        for p in results
+          - y++
+          tr
+            td.center #{y}
+            td.center #{p.bgtype_name}
+            td.center #{p.bgtypesub_name}
+            td.right #{p.amount}
+            td.right #{p.order_amt}
+            td.right #{p.total}
+            td.right #{p.perUsed} %
+      tfooter 
+        tr
+          td.tbfooter(colspan='8')
