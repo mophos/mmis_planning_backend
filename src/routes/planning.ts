@@ -279,7 +279,7 @@ router.delete('/tmp/:tmpId', async (req, res, next) => {
   let tmpId = +req.params.tmpId;
 
   try {
-    let rs = await planningModel.deletePlanningTmp(db, tmpId);
+    let rs = await planningModel.deletePlanningTmp(db, [tmpId]);
     res.send({ ok: true });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -303,24 +303,29 @@ router.get('/history/:headerId', async (req, res, next) => {
 });
 
 const insertPlanning = (async (db: Knex, _header: any, _uuid: any, peopleUserId: any) => {
+  let refHeaderId = _header.refHeaderId ? _header.refHeaderId.toString() : null;
   let header = {
     planning_year: _header.planningYear,
     planning_amount: _header.totalAmount,
     planning_name: _header.planningName,
     planning_memo: _header.planningMemo,
     planning_qty: _header.planningQty,
+    ref_hdr_id: refHeaderId,
     create_date: moment().format('YYYY-MM-DD HH:mm:ss'),
     create_by: peopleUserId
   }
   let rs: any = await planningModel.insertPlanningHeader(db, header);
   let headerId = rs[0];
-
   await planningModel.insertPlanningDetailFromTmp(db, headerId, _uuid);
+
+  if (refHeaderId) await planningModel.changePlanningInactive(db, refHeaderId);
+
   return headerId;
 });
 
 const updatePlanning = (async (db: Knex, _header: any, _uuid: any, peopleUserId: any) => {
   let _headerId = _header.planningHeaderId;
+  let refHeaderId = _header.refHeaderId ? _header.refHeaderId.toString() : null;
   let header = {
     planning_year: _header.planningYear,
     planning_amount: _header.totalAmount,
@@ -328,12 +333,15 @@ const updatePlanning = (async (db: Knex, _header: any, _uuid: any, peopleUserId:
     planning_memo: _header.planningMemo,
     confirmed: _header.confirmed,
     planning_qty: _header.planningQty,
+    ref_hdr_id: refHeaderId,
     update_date: moment().format('YYYY-MM-DD HH:mm:ss'),
     update_by: peopleUserId
   }
   await planningModel.updatePlanningHeader(db, _headerId, header);
   await planningModel.deletePlanningDetail(db, _headerId);
   await planningModel.insertPlanningDetailFromTmp(db, _headerId, _uuid);
+
+  if (refHeaderId) await planningModel.changePlanningInactive(db, refHeaderId);
 });
 
 router.post('/adjust-amount', async (req, res, next) => {

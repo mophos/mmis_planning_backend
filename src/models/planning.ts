@@ -54,6 +54,15 @@ export default class PlanningModel {
       .andWhere('planning_name', planningName);
   }
 
+  changePlanningInactive(knex: Knex, headerIds: any) {
+    var _ids = headerIds.split(',');
+    return knex('bm_planning_header as ph')
+      .update({
+        'is_active': 'N'
+      })
+      .whereIn('planning_hdr_id', _ids);
+  }
+
   deletePlanningHeader(knex: Knex, headerId) {
     return knex('bm_planning_header')
       .where('planning_hdr_id', headerId)
@@ -161,7 +170,7 @@ export default class PlanningModel {
       .update(data);
   }
 
-  deletePlanningTmp(knex: Knex, id: any) {
+  deletePlanningTmp(knex: Knex, id: any[]) {
     return knex('bm_planning_tmp')
       .whereIn('tmp_id', id)
       .delete();
