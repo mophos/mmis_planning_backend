@@ -31,6 +31,7 @@ router.post('/detail', async (req, res, next) => {
     _detail.od_date = detail.operationDate;
     _detail.bgsource_id = detail.budgetSourceId;
     _detail.amount = detail.budgetAmount;
+    _detail.remark = detail.budgetRemark;
     _detail.create_by = req.decoded.people_user_id;
 
     let rs: any = await budgetModel.insertBudgetDetail(db, _detail);
@@ -54,6 +55,7 @@ router.put('/detail/:budgetDetailId', async (req, res, next) => {
     _detail.od_date = detail.operationDate;
     _detail.bgsource_id = detail.budgetSourceId;
     _detail.amount = detail.budgetAmount;
+    _detail.remark = detail.budgetRemark;
     _detail.update_by = req.decoded.people_user_id;
 
     let rs: any = await budgetModel.updateBudgetDetail(db, budgetDetailId, _detail);
@@ -181,6 +183,28 @@ router.get('/report/sub-total', (req, res, next) => {
     .finally(() => {
       db.destroy();
     });
+});
+
+router.post('/sub-total', async (req, res, next) => {
+  let db = req.db;
+  let transactionData = req.body.data;
+  try {
+    let _trx: any = {};
+    _trx.bgdetail_id = transactionData.bugdetDetailId;
+    _trx.incoming_balance = transactionData.incomingBalance || 0;
+    _trx.amount = transactionData.spendAmount;
+    _trx.balance = _trx.incoming_balance - _trx.amount;
+    _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
+    _trx.transaction_status = 'SPEND';
+    _trx.remark = transactionData.remark;
+    await budgetModel.insertBudgetTransaction(db, _trx);
+    res.send({ ok: true });
+  } catch (error) {
+    console.log(error)
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
 });
 
 export default router;

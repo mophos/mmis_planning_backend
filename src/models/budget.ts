@@ -55,7 +55,7 @@ export default class BudgetModel {
 
   getTotalSubBudget(knex: Knex, budgetYear) {
     let sql = `
-      select bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
+      select bd.bgdetail_id, bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
       IFNULL( ( 100 / bd.amount * (bd.amount - od.order_amt)) , 0 ) AS perUsed 
       from view_budget_subtype bd
       left join (
@@ -116,6 +116,11 @@ export default class BudgetModel {
       where bd.bg_year = ?
     `;
     return knex.raw(sql, [budgetYear, budgetYear]);
+  }
+
+  insertBudgetTransaction(knex: Knex, data: any) {
+    return knex('pc_budget_transection')
+      .insert(data);
   }
 
 }
