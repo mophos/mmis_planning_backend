@@ -73,17 +73,16 @@ export default class BudgetModel {
 
   getBudgetTransaction(knex: Knex, budgetYear: any, budgetDetailId: any) {
     let query = knex('pc_budget_transection as pbt')
-      .select('pbt.date_time'
+      .select('pbt.purchase_order_id'
+        , 'pbt.date_time'
         , knex.raw(`concat(vbg.bgtype_name, ' - ', vbg.bgtypesub_name) as budget_desc`)
         , 'po.purchase_order_number'
         , 'pbt.incoming_balance'
-        , knex.raw(`IF(pbt.transaction_status='SPEND', pbt.amount, null) as spend_amount`)
-        , knex.raw(`IF(pbt.transaction_status='REVOKE', pbt.amount, null) as revoke_amount`)
+        , knex.raw(`IF(pbt.transaction_status='SPEND', -1*pbt.amount, pbt.amount) as amount`)
         , 'pbt.balance'
-        , knex.raw(`IF(pbt.transaction_status='SPEND', 'ตัดงบ', 'คืนงบ') as type_desc`)
-        , 'pbt.transaction_status')
-      .join('pc_purchasing_order as po', 'po.purchase_order_id', 'pbt.purchase_order_id')
+        , 'pbt.remark')
       .join('view_budget_subtype as vbg', 'vbg.bgdetail_id', 'pbt.bgdetail_id')
+      .leftJoin('pc_purchasing_order as po', 'po.purchase_order_id', 'pbt.purchase_order_id')
       .where('vbg.bg_year', budgetYear)
     if (budgetDetailId) {
       query.andWhere('pbt.bgdetail_id', budgetDetailId)
