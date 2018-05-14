@@ -145,8 +145,8 @@ export default class PlanningModel {
     return knex.raw(`call forecast(${planningYear})`);
   }
 
-  getForecastList(knex: Knex, forecastYear: any) {
-    return knex('bm_planning_forecast as pf')
+  getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
+    let query = knex('bm_planning_forecast as pf')
       .select('pf.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'ug.to_unit_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
         , 'ug.cost', 'mg.planning_freeze', 'mg.planning_unit_generic_id', 'mg.planning_method')
@@ -157,6 +157,10 @@ export default class PlanningModel {
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
       .where('pf.forecast_year', forecastYear)
       .andWhere('mg.is_planning', 'Y');
+    if (_genericGroups) {
+      query.whereIn('mg.generic_type_id', _genericGroups);
+    }
+    return query;
   }
 
   insertPlanningTmp(knex: Knex, data: any) {
