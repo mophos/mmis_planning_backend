@@ -132,6 +132,7 @@ router.get('/detail/:headerId', async (req, res, next) => {
       obj.create_by = r.create_by;
       obj.update_by = r.update_by;
       obj.generic_type_name = r.generic_type_name === 'ยา' ? r.account_name : r.generic_type_name;
+      obj.generic_type_id = r.generic_type_id;
       data.push(obj);
     }
     await planningModel.insertPlanningTmp(db, data);
@@ -216,6 +217,7 @@ router.post('/process', async (req, res, next) => {
         obj.freeze = r.planning_freeze ? 'Y' : 'N';
         obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
         obj.create_by = req.decoded.people_user_id;
+        obj.generic_type_id = r.mg.generic_type_id;
         data.push(obj);
       }
       await planningModel.clearPlanningTmp(db, _uuid);
@@ -234,14 +236,16 @@ router.post('/process', async (req, res, next) => {
 router.get('/tmp', async (req, res, next) => {
   let db = req.db;
   let _uuid = req.query.uuid;
-  let query = req.query.query
+  let query = req.query.query;
+  let genericType = req.query.genericType;
   let limit = +req.query.limit || 5;
   let offset = +req.query.offset || 0;
 
   try {
     let _query = query === 'undefined' || query === null ? '' : query;
-    let rs = await planningModel.getPlanningTmp(db, _uuid, _query, limit, offset);
-    let header = await planningModel.countPlanningTmp(db, _uuid, _query);
+    let _genericType = genericType === 'undefined' || genericType === null ? '' : genericType;
+    let rs = await planningModel.getPlanningTmp(db, _uuid, _query, _genericType, limit, offset);
+    let header = await planningModel.countPlanningTmp(db, _uuid, _query, _genericType);
     res.send({ ok: true, rows: rs, total: header[0].total, amount: header[0].amount });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -362,7 +366,7 @@ router.post('/adjust-amount', async (req, res, next) => {
   let _adjust = req.body.amount;
 
   try {
-    let rs1 = await planningModel.countPlanningTmp(db, _uuid, null);
+    let rs1 = await planningModel.countPlanningTmp(db, _uuid, null, null);
     let _total = rs1[0].amount || 0;
     let rs2 = await planningModel.getPlanningFreezeAmount(db, _uuid);
     let _freeze = rs2[0].amount || 0;
@@ -462,6 +466,7 @@ router.post('/copy', async (req, res, next) => {
       obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
       obj.create_by = r.create_by;
       obj.update_by = r.update_by;
+      obj.generic_type_id = r.generic_type_id;
       data.push(obj);
     }
     await planningModel.clearPlanningTmp(db, _uuid);
@@ -661,6 +666,7 @@ router.post('/merge', async (req, res, next) => {
       obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
       obj.create_by = r.create_by;
       obj.update_by = r.update_by;
+      obj.generic_type_id = r.generic_type_id;
       data.push(obj);
     }
     await planningModel.clearPlanningTmp(db, _uuid);

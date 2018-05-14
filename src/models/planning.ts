@@ -71,7 +71,7 @@ export default class PlanningModel {
 
   getPlanningDetail(knex: Knex, headerId: any) {
     return knex('bm_planning_detail as pd')
-      .select('pd.*', 'mg.generic_name', 'bt.bid_name as bid_type_name'
+      .select('pd.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'mg.generic_type_id'
         // , knex.raw(`CONCAT(uf.unit_name, ' (', ug.qty, ' ', ut.unit_name, ')') as unit_desc`)
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
         , 'gt.generic_type_name', 'ga.account_name')
@@ -147,7 +147,7 @@ export default class PlanningModel {
 
   getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
     let query = knex('bm_planning_forecast as pf')
-      .select('pf.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'ug.to_unit_id'
+      .select('pf.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'ug.to_unit_id', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
         , 'ug.cost', 'mg.planning_freeze', 'mg.planning_unit_generic_id', 'mg.planning_method')
       .join('mm_generics as mg', 'mg.generic_id', 'pf.generic_id')
@@ -186,12 +186,15 @@ export default class PlanningModel {
       .delete();
   }
 
-  getPlanningTmp(knex: Knex, _uuid: any, query: any, limit: number, offset: number = 0) {
+  getPlanningTmp(knex: Knex, _uuid: any, query: any, genericType: any, limit: number, offset: number = 0) {
     let sql = knex('bm_planning_tmp')
       .where('uuid', _uuid);
     if (query) {
       let _query = `%${query}%`;
       sql.andWhere('generic_name', 'like', _query);
+    }
+    if (genericType) {
+      sql.andWhere('generic_type_id', genericType);
     }
     if (limit) {
       sql.limit(limit);
@@ -200,7 +203,7 @@ export default class PlanningModel {
     return sql;
   }
 
-  countPlanningTmp(knex: Knex, _uuid: any, query: any) {
+  countPlanningTmp(knex: Knex, _uuid: any, query: any, genericType: any) {
     let sql = knex('bm_planning_tmp')
       .count('* as total')
       .sum('amount as amount')
@@ -208,6 +211,9 @@ export default class PlanningModel {
     if (query) {
       let _query = `%${query}%`;
       sql.andWhere('generic_name', 'like', _query);
+    }
+    if (genericType) {
+      sql.andWhere('generic_type_id', genericType);
     }
     return sql;
   }
@@ -256,7 +262,7 @@ export default class PlanningModel {
       .select('pd.*', knex.raw('sum(pd.q1) as q1'), knex.raw('sum(pd.q2) as q2')
         , knex.raw('sum(pd.q3) as q3'), knex.raw('sum(pd.q4) as q4')
         , knex.raw('sum(pd.qty) as qty'), knex.raw('sum(pd.amount) as amount')
-        , 'mg.generic_name', 'bt.bid_name as bid_type_name'
+        , 'mg.generic_name', 'bt.bid_name as bid_type_name', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty')
       .join('mm_generics as mg', 'mg.generic_id', 'pd.generic_id')
       .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')

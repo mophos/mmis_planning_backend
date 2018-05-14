@@ -34,7 +34,7 @@ export default class StandardModel {
   searchGenericAutoComplete(db: Knex, query: any): any {
     let _query = `${query}%`;
     let sql = db('mm_generics as mg')
-      .select('mg.generic_id', 'mg.generic_name', 'mg.planning_method', 'mg.planning_freeze')
+      .select('mg.generic_id', 'mg.generic_name', 'mg.planning_method', 'mg.planning_freeze', 'mg.generic_type_id')
       // .where('mg.is_planning', 'Y')
       .where('mg.is_active', 'Y')
       .where('mg.mark_deleted', 'N')
@@ -92,6 +92,12 @@ export default class StandardModel {
       .where('ug.is_deleted', 'N')
       .where('ug.is_active', 'Y')
       .groupByRaw('ug.generic_id, unit_generic_id');
+  }
+
+  getGenericTypes(knex: Knex, _genericGroups: any[]) {
+    return knex('mm_generic_types')
+      .whereIn('generic_type_id', _genericGroups)
+      .andWhere('isactive', 1);
   }
 
 }

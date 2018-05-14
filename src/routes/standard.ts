@@ -112,4 +112,27 @@ router.get('/search/generic/autocomplete', async (req, res, next) => {
   }
 });
 
+router.get('/generic-types', async (req, res, next) => {
+  let db = req.db;
+  let genericGroups = req.decoded.generic_type_id;
+
+  try {
+    let _ggs = [];
+    if (genericGroups) {
+      let pgs = genericGroups.split(',');
+      pgs.forEach(v => {
+        _ggs.push(v);
+      });
+    }
+
+    let rs = await stdModel.getGenericTypes(db, _ggs);
+    res.send({ ok: true, rows: rs });
+  } catch (error) {
+    console.log(error);
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
 export default router;
