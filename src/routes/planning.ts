@@ -701,4 +701,18 @@ router.get('/report/:headerId', async (req, res, next) => {
   });
 });
 
+router.post('/clear-tmp', async (req, res, next) => {
+  let db = req.db;
+  let _uuid = req.body.uuid;
+
+  try {
+    let rs: any = await planningModel.clearPlanningTmp(db, _uuid);
+    res.send({ ok: true });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
 export default router;
