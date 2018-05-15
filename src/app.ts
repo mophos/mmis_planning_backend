@@ -7,7 +7,7 @@ import * as favicon from 'serve-favicon';
 import * as logger from 'morgan';
 import * as cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
-import Knex = require('knex');
+import * as Knex from 'knex';
 import { MySqlConnectionConfig } from 'knex';
 import * as cors from 'cors';
 import * as _ from 'lodash';
