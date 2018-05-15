@@ -1,7 +1,8 @@
-require('dotenv').config();
+import * as path from 'path';
+let envPath = path.join(__dirname, '../../mmis-config');
+require('dotenv').config(({ path: envPath }));
 
 import * as express from 'express';
-import * as path from 'path';
 import * as favicon from 'serve-favicon';
 import * as logger from 'morgan';
 import * as cookieParser from 'cookie-parser';
