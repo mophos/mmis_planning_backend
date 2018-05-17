@@ -124,8 +124,8 @@ router.get('/detail/:headerId', async (req, res, next) => {
       obj.q4 = Math.round(r.q4 / r.conversion_qty);
       obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
       obj.amount = obj.qty * obj.unit_cost;
-      obj.bid_type_id = r.bid_type_id;
-      obj.bid_type_name = r.bid_type_name;
+      // obj.bid_type_id = r.bid_type_id;
+      // obj.bid_type_name = r.bid_type_name;
       obj.freeze = r.freeze;
       obj.create_date = moment(r.create_date).format('YYYY-MM-DD HH:mm:ss');
       obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
@@ -212,8 +212,8 @@ router.post('/process', async (req, res, next) => {
         obj.q4 = Math.round(r.y4q4 / r.conversion_qty);
         obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
         obj.amount = obj.qty * obj.unit_cost;
-        obj.bid_type_id = r.planning_method;
-        obj.bid_type_name = r.bid_type_name;
+        // obj.bid_type_id = r.planning_method;
+        // obj.bid_type_name = r.bid_type_name;
         obj.freeze = r.planning_freeze ? 'Y' : 'N';
         obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
         obj.create_by = req.decoded.people_user_id;
@@ -327,6 +327,7 @@ const insertPlanning = (async (db: Knex, _header: any, _uuid: any, peopleUserId:
     planning_memo: _header.planningMemo,
     planning_qty: _header.planningQty,
     ref_hdr_id: refHeaderId,
+    bgtype_id: _header.budgetTypeId,
     create_date: moment().format('YYYY-MM-DD HH:mm:ss'),
     create_by: peopleUserId
   }
@@ -459,8 +460,8 @@ router.post('/copy', async (req, res, next) => {
       obj.q4 = Math.round(r.q4 / r.conversion_qty);
       obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
       obj.amount = obj.qty * obj.unit_cost;
-      obj.bid_type_id = r.bid_type_id;
-      obj.bid_type_name = r.bid_type_name;
+      // obj.bid_type_id = r.bid_type_id;
+      // obj.bid_type_name = r.bid_type_name;
       obj.freeze = r.freeze;
       obj.create_date = moment(r.create_date).format('YYYY-MM-DD HH:mm:ss');
       obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
@@ -524,7 +525,7 @@ router.get('/excel/:headerId', async (req, res, next) => {
       'งวดที่4': r.q4,
       'จำนวนรวม': r.qty,
       'มูลค่ารวม': r.amount,
-      'การจัดซื้อ': r.bid_type_name,
+      // 'การจัดซื้อ': r.bid_type_name,
       'Freeze': r.freeze
     };
     data.push(obj);
@@ -578,8 +579,8 @@ router.post('/excel', upload.single('file'), async (req, res, next) => {
     header[13] === 'งวดที่4' &&
     header[14] === 'จำนวนรวม' &&
     header[15] === 'มูลค่ารวม' &&
-    header[16] === 'การจัดซื้อ' &&
-    header[17] === 'Freeze') {
+    // header[16] === 'การจัดซื้อ' &&
+    header[16] === 'Freeze') {
 
     let _data: any = [];
     for (let x = 1; x < maxRecord; x++) {
@@ -600,8 +601,8 @@ router.post('/excel', upload.single('file'), async (req, res, next) => {
         q4: excelData[x][13],
         qty: excelData[x][14],
         amount: excelData[x][15],
-        bid_type_name: excelData[x][16],
-        freeze: excelData[x][17],
+        // bid_type_name: excelData[x][16],
+        freeze: excelData[x][16],
         create_by: req.decoded.people_user_id
       }
       _data.push(obj);
@@ -659,8 +660,8 @@ router.post('/merge', async (req, res, next) => {
       obj.q4 = Math.round(r.q4 / r.conversion_qty);
       obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
       obj.amount = obj.qty * obj.unit_cost;
-      obj.bid_type_id = r.bid_type_id;
-      obj.bid_type_name = r.bid_type_name;
+      // obj.bid_type_id = r.bid_type_id;
+      // obj.bid_type_name = r.bid_type_name;
       obj.freeze = r.freeze;
       obj.create_date = moment(r.create_date).format('YYYY-MM-DD HH:mm:ss');
       obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
