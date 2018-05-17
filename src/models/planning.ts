@@ -71,12 +71,13 @@ export default class PlanningModel {
 
   getPlanningDetail(knex: Knex, headerId: any) {
     return knex('bm_planning_detail as pd')
-      .select('pd.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'mg.generic_type_id'
+      .select('pd.*', 'mg.generic_name', 'mg.generic_type_id'
+        // , 'bt.bid_name as bid_type_name'
         // , knex.raw(`CONCAT(uf.unit_name, ' (', ug.qty, ' ', ut.unit_name, ')') as unit_desc`)
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
         , 'gt.generic_type_name', 'ga.account_name')
       .join('mm_generics as mg', 'mg.generic_id', 'pd.generic_id')
-      .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
+      // .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
       .join('mm_unit_generics as ug', 'ug.unit_generic_id', 'pd.unit_generic_id')
       .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
@@ -96,13 +97,13 @@ export default class PlanningModel {
         planning_hdr_id, generic_id, unit_generic_id, unit_cost, primary_unit_id
         , rate_1_year, rate_2_year, rate_3_year, estimate_qty, stock_qty
         , inventory_date, estimate_buy, q1, q2, q3
-        , q4, qty, amount, bid_type_id, freeze
+        , q4, qty, amount, freeze
         , create_date, update_date, create_by, update_by
       )
       select ?, generic_id, unit_generic_id, unit_cost, primary_unit_id
             , (rate_1_year*conversion_qty), (rate_2_year*conversion_qty), (rate_3_year*conversion_qty), (estimate_qty*conversion_qty), (stock_qty*conversion_qty)
             , inventory_date, (estimate_buy*conversion_qty), (q1*conversion_qty), (q2*conversion_qty), (q3*conversion_qty)
-            , (q4*conversion_qty), (qty*conversion_qty), amount, bid_type_id, freeze
+            , (q4*conversion_qty), (qty*conversion_qty), amount, freeze
             , create_date, update_date, create_by, update_by
       from bm_planning_tmp
       where uuid = ?
@@ -147,11 +148,11 @@ export default class PlanningModel {
 
   getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
     let query = knex('bm_planning_forecast as pf')
-      .select('pf.*', 'mg.generic_name', 'bt.bid_name as bid_type_name', 'ug.to_unit_id', 'mg.generic_type_id'
+      .select('pf.*', 'mg.generic_name', 'ug.to_unit_id', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
         , 'ug.cost', 'mg.planning_freeze', 'mg.planning_unit_generic_id', 'mg.planning_method')
       .join('mm_generics as mg', 'mg.generic_id', 'pf.generic_id')
-      .join('l_bid_type as bt', 'bt.bid_id', 'mg.planning_method')
+      // .join('l_bid_type as bt', 'bt.bid_id', 'mg.planning_method')
       .join('mm_unit_generics as ug', 'ug.unit_generic_id', 'mg.planning_unit_generic_id')
       .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
@@ -235,10 +236,9 @@ export default class PlanningModel {
     let sql = `
     update bm_planning_tmp t,
     (
-      select tmp.tmp_id, mg.generic_id, unt.unit_generic_id, unt.to_unit_id, bt.bid_id, unt.qty
+      select tmp.tmp_id, mg.generic_id, unt.unit_generic_id, unt.to_unit_id, unt.qty
       from bm_planning_tmp tmp
       join mm_generics mg on mg.generic_name = tmp.generic_name
-      join l_bid_type bt on bt.bid_name = tmp.bid_type_name
       join (
         select ug.unit_generic_id, ug.to_unit_id, ug.generic_id, ug.qty, concat(fu.unit_name, ' ', '(', ug.qty, ' ', tu.unit_name, ')') unit_desc
         from mm_unit_generics ug
@@ -250,8 +250,7 @@ export default class PlanningModel {
     set t.generic_id = s.generic_id,
         t.unit_generic_id = s.unit_generic_id,
         t.primary_unit_id = s.to_unit_id,
-        t.conversion_qty = s.qty,
-        t.bid_type_id = s.bid_id
+        t.conversion_qty = s.qty
     where t.tmp_id = s.tmp_id
     `;
     return knex.raw(sql, [_uuid])
@@ -262,10 +261,10 @@ export default class PlanningModel {
       .select('pd.*', knex.raw('sum(pd.q1) as q1'), knex.raw('sum(pd.q2) as q2')
         , knex.raw('sum(pd.q3) as q3'), knex.raw('sum(pd.q4) as q4')
         , knex.raw('sum(pd.qty) as qty'), knex.raw('sum(pd.amount) as amount')
-        , 'mg.generic_name', 'bt.bid_name as bid_type_name', 'mg.generic_type_id'
+        , 'mg.generic_name', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty')
       .join('mm_generics as mg', 'mg.generic_id', 'pd.generic_id')
-      .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
+      // .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
       .join('mm_unit_generics as ug', 'ug.unit_generic_id', 'pd.unit_generic_id')
       .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
