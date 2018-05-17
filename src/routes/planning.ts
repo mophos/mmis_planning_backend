@@ -217,7 +217,7 @@ router.post('/process', async (req, res, next) => {
         obj.freeze = r.planning_freeze ? 'Y' : 'N';
         obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
         obj.create_by = req.decoded.people_user_id;
-        obj.generic_type_id = r.mg.generic_type_id;
+        obj.generic_type_id = r.generic_type_id;
         data.push(obj);
       }
       await planningModel.clearPlanningTmp(db, _uuid);
