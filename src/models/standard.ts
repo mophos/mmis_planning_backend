@@ -34,7 +34,8 @@ export default class StandardModel {
   searchGenericAutoComplete(db: Knex, query: any): any {
     let _query = `${query}%`;
     let sql = db('mm_generics as mg')
-      .select('mg.generic_id', 'mg.generic_name', 'mg.planning_method', 'mg.planning_freeze', 'mg.generic_type_id')
+      .select('mg.generic_id', 'mg.generic_name', 'mg.purchasing_method', 'mg.planning_freeze', 'mg.generic_type_id'
+    , 'planning_unit_generic_id')
       // .where('mg.is_planning', 'Y')
       .where('mg.is_active', 'Y')
       .where('mg.mark_deleted', 'N')
