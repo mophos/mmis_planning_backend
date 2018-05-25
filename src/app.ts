@@ -107,7 +107,7 @@ let adminAuth = (req, res, next) => {
   try {
     if (accessRight) {
       const rights = accessRight.split(',');
-      if (_.indexOf(rights, 'CM_ADMIN') > -1) {
+      if (_.indexOf(rights, 'BM_ADMIN') > -1) {
         next();
       } else {
         res.send({ ok: false, error: 'No permission found!' });
