@@ -98,7 +98,7 @@ export default class StandardModel {
   getGenericTypes(knex: Knex, _genericGroups: any[]) {
     return knex('mm_generic_types')
       .whereIn('generic_type_id', _genericGroups)
-      .andWhere('isactive', 1);
+      .andWhere('is_actived', 1);
   }
 
 }
