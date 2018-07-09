@@ -143,7 +143,7 @@ export default class PlanningModel {
   }
 
   callForecast(knex: Knex, planningYear: any) {
-    return knex.raw(`call forecast(${planningYear})`);
+    return knex.raw(`call forecast_v2(${planningYear})`);
   }
 
   getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
