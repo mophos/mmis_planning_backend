@@ -86,6 +86,27 @@ export default class PlanningModel {
       .where('planning_hdr_id', headerId);
   }
 
+  getPlanningForCopy(knex: Knex, headerId: any, planningYear: any) {
+    return knex('bm_planning_detail as pd')
+      .select('mg.generic_name', 'mg.generic_type_id'
+      , 'pd.generic_id', 'pd.unit_generic_id', 'pd.unit_cost', 'pd.primary_unit_id'
+      , 'pd.q1', 'pd.q2', 'pd.q3', 'pd.q4', 'pd.qty', 'pd.freeze'
+        , 'pf.sumy1', 'pf.sumy2', 'pf.sumy3', 'pf.sumy4', 'pf.stock_qty', 'pf.process_date', 'pf.buy_qty'
+        // , 'bt.bid_name as bid_type_name'
+        // , knex.raw(`CONCAT(uf.unit_name, ' (', ug.qty, ' ', ut.unit_name, ')') as unit_desc`)
+        , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
+        , 'gt.generic_type_name', 'ga.account_name')
+      .join('mm_generics as mg', 'mg.generic_id', 'pd.generic_id')
+      // .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
+      .join('mm_unit_generics as ug', 'ug.unit_generic_id', 'pd.unit_generic_id')
+      .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
+      .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
+      .join('mm_generic_types as gt', 'gt.generic_type_id', 'mg.generic_type_id')
+      .joinRaw(`join bm_planning_forecast as pf on pf.generic_id = pd.generic_id and pf.forecast_year = '${planningYear}' `)
+      .leftJoin('mm_generic_accounts as ga', 'ga.account_id', 'mg.account_id')
+      .where('planning_hdr_id', headerId);
+  }
+
   insertPlanningDetail(knex: Knex, data: any) {
     return knex('bm_planning_detail')
       .insert(data);

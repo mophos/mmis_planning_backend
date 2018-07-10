@@ -156,6 +156,20 @@ router.get('/year', async (req, res, next) => {
   }
 });
 
+router.post('/forecast', async (req, res, next) => {
+  let db = req.db;
+  let forecastYear = req.body.year;
+
+  try {
+    await planningModel.callForecast(db, forecastYear);
+    res.send({ ok: true });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
 router.get('/forecast/:genericId/:year', async (req, res, next) => {
   let db = req.db;
   let genericId = req.params.genericId;
@@ -186,7 +200,7 @@ router.post('/process', async (req, res, next) => {
         _ggs.push(v);
       });
 
-      await planningModel.callForecast(db, planningYear);
+      // await planningModel.callForecast(db, planningYear);
       let rs: any = await planningModel.getForecastList(db, planningYear, _ggs);
       let data = [];
       for (const r of rs) {
@@ -432,10 +446,11 @@ router.post('/copy', async (req, res, next) => {
   let db = req.db;
   let planningHeaderId = req.body.headerId;
   let adjustPercent = req.body.percent || 0;
+  let planningYear = req.body.year;
   let _uuid = req.body.uuid;
 
   try {
-    let rs: any = await planningModel.getPlanningDetail(db, planningHeaderId);
+    let rs: any = await planningModel.getPlanningForCopy(db, planningHeaderId, planningYear);
     let data = [];
     for (const r of rs) {
       let obj: any = {};
@@ -447,13 +462,13 @@ router.post('/copy', async (req, res, next) => {
       obj.unit_cost = r.unit_cost;
       obj.conversion_qty = r.conversion_qty;
       obj.primary_unit_id = r.primary_unit_id;
-      obj.rate_1_year = Math.round(r.rate_1_year / r.conversion_qty);
-      obj.rate_2_year = Math.round(r.rate_2_year / r.conversion_qty);
-      obj.rate_3_year = Math.round(r.rate_3_year / r.conversion_qty);
-      obj.estimate_qty = Math.round(r.estimate_qty / r.conversion_qty);
+      obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
+      obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
+      obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
+      obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
       obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
-      obj.inventory_date = moment(r.inventory_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.estimate_buy = Math.round(r.estimate_buy / r.conversion_qty);
+      obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
+      obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
       obj.q1 = Math.round(r.q1 / r.conversion_qty);
       obj.q2 = Math.round(r.q2 / r.conversion_qty);
       obj.q3 = Math.round(r.q3 / r.conversion_qty);
@@ -463,10 +478,10 @@ router.post('/copy', async (req, res, next) => {
       // obj.bid_type_id = r.bid_type_id;
       // obj.bid_type_name = r.bid_type_name;
       obj.freeze = r.freeze;
-      obj.create_date = moment(r.create_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.create_by = r.create_by;
-      obj.update_by = r.update_by;
+      obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
+      obj.update_date = moment().format('YYYY-MM-DD HH:mm:ss');
+      obj.create_by = req.decoded.people_user_id;
+      obj.update_by = req.decoded.people_user_id;
       obj.generic_type_id = r.generic_type_id;
       data.push(obj);
     }
