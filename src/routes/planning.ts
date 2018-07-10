@@ -174,9 +174,10 @@ router.get('/forecast/:genericId/:year', async (req, res, next) => {
   let db = req.db;
   let genericId = req.params.genericId;
   let forecastYear = req.params.year;
+  let tmpId = +req.query.tmpId;
 
   try {
-    let rs: any = await planningModel.getForecast(db, genericId, forecastYear);
+    let rs: any = await planningModel.getForecast(db, genericId, forecastYear, tmpId);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });
