@@ -151,14 +151,20 @@ export default class PlanningModel {
   }
 
   getForecast(knex: Knex, genericId: any, forecastYear: any, tmpId: any) {
-    return knex('bm_planning_forecast as pf')
-      .select('pf.*', knex.raw('IFNULL(pt.q1 * pt.conversion_qty, pf.y4q1) as y4q1')
-      , knex.raw('IFNULL(pt.q2 * pt.conversion_qty, pf.y4q2) as y4q2')
-      , knex.raw('IFNULL(pt.q3 * pt.conversion_qty, pf.y4q3) as y4q3')
-      , knex.raw('IFNULL(pt.q4 * pt.conversion_qty, pf.y4q4) as y4q4'))
-      .joinRaw(`left join bm_planning_tmp as pt on pt.generic_id = pf.generic_id and pt.tmp_id = ${tmpId}`)
-      .where('pf.generic_id', genericId)
-      .andWhere('pf.forecast_year', forecastYear)
+    if (tmpId) { //edit row
+      return knex('bm_planning_forecast as pf')
+        .select('pf.*', knex.raw('IFNULL(pt.q1 * pt.conversion_qty, pf.y4q1) as y4q1')
+          , knex.raw('IFNULL(pt.q2 * pt.conversion_qty, pf.y4q2) as y4q2')
+          , knex.raw('IFNULL(pt.q3 * pt.conversion_qty, pf.y4q3) as y4q3')
+          , knex.raw('IFNULL(pt.q4 * pt.conversion_qty, pf.y4q4) as y4q4'))
+        .joinRaw(`left join bm_planning_tmp as pt on pt.generic_id = pf.generic_id and pt.tmp_id = ${tmpId}`)
+        .where('pf.generic_id', genericId)
+        .andWhere('pf.forecast_year', forecastYear);
+    } else { //new row
+      return knex('bm_planning_forecast as pf')
+        .where('pf.generic_id', genericId)
+        .andWhere('pf.forecast_year', forecastYear);
+    }
   }
 
   getPlanningHistory(knex: Knex, headerId: any) {
