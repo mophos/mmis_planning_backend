@@ -57,7 +57,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS `forecast_tmp` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 insert into forecast_tmp(generic_id, forecast_year, stock)
-select mg.generic_id, in_forecast_year, stock_qty 
+select mg.generic_id, in_forecast_year, IFNULL(stock_qty, 0) 
 from mm_generics mg
 left join(
   select generic_id, sum(stock_qty) stock_qty
@@ -283,10 +283,10 @@ set buy = IF(sumy4-stock < 0, 0, sumy4-stock);
 
 update forecast_tmp
 set 
-y4q1 = y4q1 - (y4q1 * (buy/sumy4)),
-y4q2 = y4q2 - (y4q2 * (buy/sumy4)),
-y4q3 = y4q3 - (y4q3 * (buy/sumy4)),
-y4q4 = y4q4 - (y4q4 * (buy/sumy4));
+y4q1 = IFNULL(y4q1 - (y4q1 * (buy/sumy4)), 0),
+y4q2 = IFNULL(y4q2 - (y4q2 * (buy/sumy4)), 0),
+y4q3 = IFNULL(y4q3 - (y4q3 * (buy/sumy4)), 0),
+y4q4 = IFNULL(y4q4 - (y4q4 * (buy/sumy4)), 0);
 
 update forecast_tmp
 set buy = (y4q1+y4q2+y4q3+y4q4);
