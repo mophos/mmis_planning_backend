@@ -397,7 +397,7 @@ router.post('/adjust-amount', async (req, res, next) => {
     let tmpIds = [];
 
     for (const r of rows) {
-      if (adjustAmount < 0) {
+      if (adjustAmount < 0 || r.unit_cost === 0) {
         r.q1 = 0;
         r.q2 = 0;
         r.q3 = 0;
