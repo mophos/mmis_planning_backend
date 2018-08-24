@@ -150,7 +150,7 @@ export default class PlanningModel {
       .select('planning_year');
   }
 
-  getForecast(knex: Knex, genericId: any, forecastYear: any, tmpId: any) {
+  getForecast(knex: Knex, genericId: any, forecastYear: any, tmpId: any, warehouseId: any) {
     if (tmpId) { //edit row
       return knex('bm_planning_forecast as pf')
         .select('pf.*', knex.raw('IFNULL(pt.q1 * pt.conversion_qty, pf.y4q1) as y4q1')
@@ -163,6 +163,7 @@ export default class PlanningModel {
     } else { //new row
       return knex('bm_planning_forecast as pf')
         .where('pf.generic_id', genericId)
+        .andWhere('pf.warehouse_id', warehouseId)
         .andWhere('pf.forecast_year', forecastYear);
     }
   }
@@ -174,11 +175,11 @@ export default class PlanningModel {
       .orderBy('ph.planning_hdr_id', 'desc');
   }
 
-  callForecast(knex: Knex, planningYear: any) {
-    return knex.raw(`call forecast_v2(${planningYear})`);
+  callForecast(knex: Knex, planningYear: any, warehouseId: any) {
+    return knex.raw(`call forecast_v2(${planningYear}, ${warehouseId})`);
   }
 
-  getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
+  getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[], warehouseId: any) {
     let query = knex('bm_planning_forecast as pf')
       .select('pf.*', 'mg.generic_name', 'ug.to_unit_id', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
@@ -189,6 +190,7 @@ export default class PlanningModel {
       .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
       .where('pf.forecast_year', forecastYear)
+      .andWhere('pf.warehouse_id', warehouseId)
       .andWhere('mg.is_planning', 'Y');
     if (_genericGroups) {
       query.whereIn('mg.generic_type_id', _genericGroups);

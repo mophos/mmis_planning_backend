@@ -159,9 +159,10 @@ router.get('/year', async (req, res, next) => {
 router.post('/forecast', async (req, res, next) => {
   let db = req.db;
   let forecastYear = req.body.year;
+  let warehouseId = req.decoded.warehouseId;
 
   try {
-    await planningModel.callForecast(db, forecastYear);
+    await planningModel.callForecast(db, forecastYear, warehouseId);
     res.send({ ok: true });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -175,10 +176,11 @@ router.get('/forecast/:genericId/:year', async (req, res, next) => {
   let genericId = req.params.genericId;
   let forecastYear = req.params.year;
   let tmpId = req.query.tmpId;
+  let warehouseId = req.decoded.warehouseId;
 
   try {
     let _tmpId = tmpId === 'undefined' ? null : +tmpId;
-    let rs: any = await planningModel.getForecast(db, genericId, forecastYear, _tmpId);
+    let rs: any = await planningModel.getForecast(db, genericId, forecastYear, _tmpId, warehouseId);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -192,6 +194,7 @@ router.post('/process', async (req, res, next) => {
   let planningYear = req.body.year;
   let _uuid = req.body.uuid;
   let genericGroups = req.decoded.generic_type_id;
+  let warehouseId = req.decoded.warehouseId;
 
   try {
     if (genericGroups) {
@@ -203,7 +206,7 @@ router.post('/process', async (req, res, next) => {
       });
 
       // await planningModel.callForecast(db, planningYear);
-      let rs: any = await planningModel.getForecastList(db, planningYear, _ggs);
+      let rs: any = await planningModel.getForecastList(db, planningYear, _ggs, warehouseId);
       let data = [];
       for (const r of rs) {
         let obj: any = {};
