@@ -193,6 +193,7 @@ router.post('/process', async (req, res, next) => {
   let db = req.db;
   let planningYear = req.body.year;
   let _uuid = req.body.uuid;
+  let genericTypeIds = req.body.genericTypeIds;
   let genericGroups = req.decoded.generic_type_id;
   let warehouseId = req.decoded.warehouseId;
 
@@ -205,43 +206,47 @@ router.post('/process', async (req, res, next) => {
         _ggs.push(v);
       });
 
-      // await planningModel.callForecast(db, planningYear);
-      let rs: any = await planningModel.getForecastList(db, planningYear, _ggs, warehouseId);
-      let data = [];
-      for (const r of rs) {
-        let obj: any = {};
-        obj.uuid = _uuid;
-        obj.generic_id = r.generic_id;
-        obj.generic_name = r.generic_name;
-        obj.unit_generic_id = r.planning_unit_generic_id;
-        obj.unit_desc = `${r.from_unit_name} (${r.conversion_qty} ${r.to_unit_name})`;
-        obj.unit_cost = r.cost;
-        obj.conversion_qty = r.conversion_qty;
-        obj.primary_unit_id = r.to_unit_id;
-        obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
-        obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
-        obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
-        obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
-        obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
-        obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
-        obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
-        obj.q1 = Math.round(r.y4q1 / r.conversion_qty);
-        obj.q2 = Math.round(r.y4q2 / r.conversion_qty);
-        obj.q3 = Math.round(r.y4q3 / r.conversion_qty);
-        obj.q4 = Math.round(r.y4q4 / r.conversion_qty);
-        obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
-        obj.amount = obj.qty * obj.unit_cost;
-        // obj.bid_type_id = r.planning_method;
-        // obj.bid_type_name = r.bid_type_name;
-        obj.freeze = r.planning_freeze ? 'Y' : 'N';
-        obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
-        obj.create_by = req.decoded.people_user_id;
-        obj.generic_type_id = r.generic_type_id;
-        data.push(obj);
+      if (genericTypeIds.length) {
+        // await planningModel.callForecast(db, planningYear);
+        let rs: any = await planningModel.getForecastList(db, planningYear, genericTypeIds, warehouseId);
+        let data = [];
+        for (const r of rs) {
+          let obj: any = {};
+          obj.uuid = _uuid;
+          obj.generic_id = r.generic_id;
+          obj.generic_name = r.generic_name;
+          obj.unit_generic_id = r.planning_unit_generic_id;
+          obj.unit_desc = `${r.from_unit_name} (${r.conversion_qty} ${r.to_unit_name})`;
+          obj.unit_cost = r.cost;
+          obj.conversion_qty = r.conversion_qty;
+          obj.primary_unit_id = r.to_unit_id;
+          obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
+          obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
+          obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
+          obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
+          obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
+          obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
+          obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
+          obj.q1 = Math.round(r.y4q1 / r.conversion_qty);
+          obj.q2 = Math.round(r.y4q2 / r.conversion_qty);
+          obj.q3 = Math.round(r.y4q3 / r.conversion_qty);
+          obj.q4 = Math.round(r.y4q4 / r.conversion_qty);
+          obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
+          obj.amount = obj.qty * obj.unit_cost;
+          // obj.bid_type_id = r.planning_method;
+          // obj.bid_type_name = r.bid_type_name;
+          obj.freeze = r.planning_freeze ? 'Y' : 'N';
+          obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
+          obj.create_by = req.decoded.people_user_id;
+          obj.generic_type_id = r.generic_type_id;
+          data.push(obj);
+        }
+        await planningModel.clearPlanningTmp(db, _uuid);
+        await planningModel.insertPlanningTmp(db, data);
+        res.send({ ok: true });
+      } else {
+        res.send({ ok: false, error: 'กรุณาเลือกประเภทหมวดสินค้า' });
       }
-      await planningModel.clearPlanningTmp(db, _uuid);
-      await planningModel.insertPlanningTmp(db, data);
-      res.send({ ok: true });
     } else {
       res.send({ ok: false, error: 'ไม่พบการกำหนดเงื่อนไขประเภทสินค้า' });
     }
