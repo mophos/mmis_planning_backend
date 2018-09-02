@@ -56,7 +56,7 @@ update forecast_tmp t,
 select s.generic_id, sum(s.out_qty) sumy3, count(distinct(month(s.stock_date))) monthy3
           from wm_stock_card s
           where s.stock_date between DATE_SUB(v_start_date, INTERVAL 3 YEAR) and DATE_SUB(v_end_date, INTERVAL 3 YEAR)
-          and s.transaction_type in ('ISS', 'IST', 'HIS')
+          and s.transaction_type in ('ISS', 'IST', 'HIS', 'REQ_OUT', 'TRN_OUT', 'ADD_OUT')
           and s.ref_src = in_warehouse_id
           group by s.generic_id
 ) r
@@ -70,7 +70,7 @@ update forecast_tmp t,
 select s.generic_id, sum(s.out_qty) sumy2, count(distinct(month(s.stock_date))) monthy2
           from wm_stock_card s
           where s.stock_date between DATE_SUB(v_start_date, INTERVAL 2 YEAR) and DATE_SUB(v_end_date, INTERVAL 2 YEAR)
-          and s.transaction_type in ('ISS', 'IST', 'HIS')
+          and s.transaction_type in ('ISS', 'IST', 'HIS', 'REQ_OUT', 'TRN_OUT', 'ADD_OUT')
           and s.ref_src = in_warehouse_id
           group by s.generic_id
 ) r
@@ -84,7 +84,7 @@ update forecast_tmp t,
 select s.generic_id, sum(s.out_qty) sumy1, count(distinct(month(s.stock_date))) monthy1
           from wm_stock_card s
           where s.stock_date between DATE_SUB(v_start_date, INTERVAL 1 YEAR) and DATE_SUB(v_end_date, INTERVAL 1 YEAR)
-          and s.transaction_type in ('ISS', 'IST', 'HIS')
+          and s.transaction_type in ('ISS', 'IST', 'HIS', 'REQ_OUT', 'TRN_OUT', 'ADD_OUT')
           and s.ref_src = in_warehouse_id
           group by s.generic_id
 ) r
