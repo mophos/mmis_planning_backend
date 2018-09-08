@@ -2,8 +2,9 @@ import * as express from 'express';
 import BudgetModel from '../models/budget';
 import ReportModel from '../models/report';
 import * as moment from 'moment';
-const router = express.Router();
+import * as json2xls from 'json2xls';
 
+const router = express.Router();
 const budgetModel = new BudgetModel();
 const reportModel = new ReportModel();
 
@@ -13,6 +14,38 @@ router.get('/detail/:budgetYear', async (req, res, next) => {
   try {
     let rs: any = await budgetModel.getBudgetDetail(db, budgetYear);
     res.send({ ok: true, rows: rs });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
+router.get('/export/:budgetYear', async (req, res, next) => {
+  let db = req.db;
+  let budgetYear = req.params.budgetYear;
+  const data = [];
+  try {
+    let rs: any = await budgetModel.getBudgetExport(db, budgetYear);
+    rs.forEach(v => {
+      const obj = {
+        "ปีงบประมาณ": (+v.bg_year + 543),
+        "แหล่งงบประมาณ": v.bgsource_name,
+        "งบประมาณ": v.bgtype_name,
+        "งบประมาณย่อย": v.bgtypesub_name,
+        "วันที่รับงบประมาณ": moment(v.od_date).format('DD-MM-') + (+moment(v.od_date).format('YYYY') + 543),
+        "จำนวนเงิน": v.amount,
+        "หมายเหตุ": v.remark
+      }
+      data.push(obj);
+    });
+    let fileName = `สรุปการเปลี่ยนแปลงงบประมาณ_${budgetYear + 543}`;
+    let xls = json2xls(data);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats');
+    res.setHeader('Content-Disposition', `attachment; filename=${encodeURI(fileName)}.xlsx`);
+    res.end(xls, 'binary');
+
+    // res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });
   } finally {

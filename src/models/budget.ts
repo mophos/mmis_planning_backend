@@ -13,6 +13,18 @@ export default class BudgetModel {
       .orderBy('bd.update_date', 'desc');
   }
 
+  getBudgetExport(knex: Knex, budgetYear: any) {
+    return knex('bm_budget_detail as bd')
+      .select('bd.*'
+        , ' bt.bgtype_name', ' bs.bgsource_name', 'bts.bgtypesub_name')
+      .join('bm_bgtype as bt', 'bt.bgtype_id', 'bd.bgtype_id')
+      .join(' bm_budget_source as bs', ' bs.bgsource_id', ' bd.bgsource_id')
+      .leftJoin(' bm_bgtypesub as bts', ' bts.bgtypesub_id', ' bd.bgtypesub_id')
+      .where(' bd.bg_year', budgetYear)
+      .where('bd.status', 'APPROVE')
+      .orderBy('bd.update_date', 'desc');
+  }
+
   insertBudgetDetail(knex: Knex, budgetDetail: any) {
     return knex('bm_budget_detail')
       .insert(budgetDetail);
