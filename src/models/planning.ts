@@ -89,8 +89,8 @@ export default class PlanningModel {
   getPlanningForCopy(knex: Knex, headerId: any, planningYear: any) {
     return knex('bm_planning_detail as pd')
       .select('mg.generic_name', 'mg.generic_type_id'
-      , 'pd.generic_id', 'pd.unit_generic_id', 'pd.unit_cost', 'pd.primary_unit_id'
-      , 'pd.q1', 'pd.q2', 'pd.q3', 'pd.q4', 'pd.qty', 'pd.freeze'
+        , 'pd.generic_id', 'pd.unit_generic_id', 'pd.unit_cost', 'pd.primary_unit_id'
+        , 'pd.q1', 'pd.q2', 'pd.q3', 'pd.q4', 'pd.qty', 'pd.freeze'
         , 'pf.sumy1', 'pf.sumy2', 'pf.sumy3', 'pf.sumy4', 'pf.stock_qty', 'pf.process_date', 'pf.buy_qty'
         // , 'bt.bid_name as bid_type_name'
         // , knex.raw(`CONCAT(uf.unit_name, ' (', ug.qty, ' ', ut.unit_name, ')') as unit_desc`)
@@ -191,7 +191,9 @@ export default class PlanningModel {
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
       .where('pf.forecast_year', forecastYear)
       .andWhere('pf.warehouse_id', warehouseId)
-      .andWhere('mg.is_planning', 'Y');
+      .andWhere('mg.is_planning', 'Y')
+      .andWhere('mg.is_active', 'Y')
+      .andWhere('mg.mark_deleted', 'Y');
     if (_genericGroups) {
       query.whereIn('mg.generic_type_id', _genericGroups);
     }
