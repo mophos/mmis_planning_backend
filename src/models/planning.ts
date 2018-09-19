@@ -193,7 +193,7 @@ export default class PlanningModel {
       .andWhere('pf.warehouse_id', warehouseId)
       .andWhere('mg.is_planning', 'Y')
       .andWhere('mg.is_active', 'Y')
-      .andWhere('mg.mark_deleted', 'Y');
+      .andWhere('mg.mark_deleted', 'N');
     if (_genericGroups) {
       query.whereIn('mg.generic_type_id', _genericGroups);
     }
