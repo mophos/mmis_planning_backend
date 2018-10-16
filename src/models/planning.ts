@@ -224,14 +224,16 @@ export default class PlanningModel {
   }
 
   getPlanningTmp(knex: Knex, _uuid: any, query: any, genericType: any, limit: number, offset: number = 0) {
-    let sql = knex('bm_planning_tmp')
-      .where('uuid', _uuid);
+    let sql = knex('bm_planning_tmp b')
+      .select('b.*', 'mg.working_code as generic_code')
+      .join('mm_generics as mg', 'b.generic_id', 'mg.generic_id')
+      .where('b.uuid', _uuid);
     if (query) {
       let _query = `%${query}%`;
-      sql.andWhere('generic_name', 'like', _query);
+      sql.andWhere('b.generic_name', 'like', _query);
     }
     if (genericType) {
-      sql.andWhere('generic_type_id', genericType);
+      sql.andWhere('b.generic_type_id', genericType);
     }
     if (limit) {
       sql.limit(limit);
