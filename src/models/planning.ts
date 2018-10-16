@@ -225,9 +225,9 @@ export default class PlanningModel {
 
   getPlanningTmp(knex: Knex, _uuid: any, query: any, genericType: any, limit: number, offset: number = 0) {
     let sql = knex('bm_planning_tmp as b')
-      .select('b.*', 'mg.working_code as generic_code', 'mgt.generic_type_name as generic_type_name_origin')
+      .select('b.*', 'mg.working_code as generic_code', 'mgh.name as generic_hosp_name')
       .join('mm_generics as mg', 'b.generic_id', 'mg.generic_id')
-      .join('mm_generic_types as mgt', 'mg.generic_type_id', 'mgt.generic_type_id')
+      .join('mm_generic_hosp as mgh', 'mg.generic_hosp_id', 'mgh.id')
       .where('b.uuid', _uuid);
     if (query) {
       let _query = `%${query}%`;
