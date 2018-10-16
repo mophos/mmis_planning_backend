@@ -535,7 +535,9 @@ router.get('/excel/:headerId', async (req, res, next) => {
   for (const r of rows) {
     let obj = {
       '#': i++,
+      'รหัสยา': r.generic_code,
       'รายการ': r.generic_name,
+      'หมวดสินค้า': r.generic_type_name,
       'หน่วย': r.unit_desc,
       'ราคาต่อหน่วย': r.unit_cost,
       'ย้อนหลัง3ปี': r.rate_3_year,
