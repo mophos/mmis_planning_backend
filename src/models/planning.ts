@@ -227,7 +227,7 @@ export default class PlanningModel {
     let sql = knex('bm_planning_tmp as b')
       .select('b.*', 'mg.working_code as generic_code', 'mgh.name as generic_hosp_name')
       .join('mm_generics as mg', 'b.generic_id', 'mg.generic_id')
-      .join('mm_generic_hosp as mgh', 'mg.generic_hosp_id', 'mgh.id')
+      .leftJoin('mm_generic_hosp as mgh', 'mg.generic_hosp_id', 'mgh.id')
       .where('b.uuid', _uuid);
     if (query) {
       let _query = `%${query}%`;
