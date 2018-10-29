@@ -328,6 +328,20 @@ router.delete('/tmp/:tmpId', async (req, res, next) => {
   }
 });
 
+router.delete('/', async (req, res, next) => {
+  let db = req.db;
+  let planningId = req.query.planningId;
+
+  try {
+    let rs = await planningModel.removePlanning(db, planningId);
+    res.send({ ok: true });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
 router.get('/history/:headerId', async (req, res, next) => {
   let db = req.db;
   let planningHeaderId = req.params.headerId;
