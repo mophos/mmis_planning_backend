@@ -217,6 +217,12 @@ export default class PlanningModel {
       .delete();
   }
 
+  removePlanning(knex: Knex, id: any) {
+    return knex('bm_planning_header')
+      .where('planning_hdr_id', id)
+      .delete();
+  }
+
   clearPlanningTmp(knex: Knex, _uuid: any) {
     return knex('bm_planning_tmp')
       .where('uuid', _uuid)
