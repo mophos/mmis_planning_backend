@@ -9,7 +9,7 @@ import * as fse from 'fs-extra';
 import * as json2xls from 'json2xls';
 import * as multer from 'multer';
 import * as rimraf from 'rimraf';
-
+import * as _ from 'lodash';
 import PlanningModel from '../models/planning';
 import ReportModel from '../models/report';
 
@@ -604,47 +604,45 @@ router.post('/excel', upload.single('file'), async (req, res, next) => {
   let maxRecord = excelData.length;
 
   let header = excelData[0];
-
-  if (header[0] === '#' &&
-    header[1] === 'รายการ' &&
-    header[2] === 'หน่วย' &&
-    header[3] === 'ราคาต่อหน่วย' &&
-    header[4] === 'ย้อนหลัง3ปี' &&
-    header[5] === 'ย้อนหลัง2ปี' &&
-    header[6] === 'ย้อนหลัง1ปี' &&
-    header[7] === 'ประมาณการใช้' &&
-    header[8] === 'ยอดคงคลัง' &&
-    header[9] === 'ประมาณการซื้อ' &&
-    header[10] === 'งวดที่1' &&
-    header[11] === 'งวดที่2' &&
-    header[12] === 'งวดที่3' &&
-    header[13] === 'งวดที่4' &&
-    header[14] === 'จำนวนรวม' &&
-    header[15] === 'มูลค่ารวม' &&
-    // header[16] === 'การจัดซื้อ' &&
-    header[16] === 'Freeze') {
+  const name = _.indexOf(header, 'รายการ');
+  const unit = _.indexOf(header, 'หน่วย');
+  const unitCost = _.indexOf(header, 'ราคาต่อหน่วย');
+  const b3y = _.indexOf(header, 'ย้อนหลัง3ปี');
+  const b2y = _.indexOf(header, 'ย้อนหลัง2ปี');
+  const b1y = _.indexOf(header, 'ย้อนหลัง1ปี');
+  const estimatedUse = _.indexOf(header, 'ประมาณการใช้');
+  const balance = _.indexOf(header, 'ยอดคงคลัง');
+  const estimatedPurchase = _.indexOf(header, 'ประมาณการซื้อ');
+  const period1 = _.indexOf(header, 'งวดที่1');
+  const period2 = _.indexOf(header, 'งวดที่2');
+  const period3 = _.indexOf(header, 'งวดที่3');
+  const period4 = _.indexOf(header, 'งวดที่4');
+  const qty = _.indexOf(header, 'จำนวนรวม');
+  const cost = _.indexOf(header, 'มูลค่ารวม');
+  const freeze = _.indexOf(header, 'Freeze');
+  if (name > -1 && unit > -1 && unitCost > -1 && b3y > -1 && b2y > -1 && b1y > -1 && estimatedUse > -1 && balance > -1 && estimatedPurchase > -1 && period1 > -1 && period2 > -1 &&
+    period3 > -1 && period4 > -1 && qty > -1 && cost > -1 && freeze > -1) {
 
     let _data: any = [];
     for (let x = 1; x < maxRecord; x++) {
       let obj: any = {
         uuid: _uuid,
-        generic_name: excelData[x][1],
-        unit_desc: excelData[x][2],
-        unit_cost: excelData[x][3],
-        rate_3_year: excelData[x][4],
-        rate_2_year: excelData[x][5],
-        rate_1_year: excelData[x][6],
-        estimate_qty: excelData[x][7],
-        stock_qty: excelData[x][8],
-        estimate_buy: excelData[x][9],
-        q1: excelData[x][10],
-        q2: excelData[x][11],
-        q3: excelData[x][12],
-        q4: excelData[x][13],
-        qty: excelData[x][14],
-        amount: excelData[x][15],
-        // bid_type_name: excelData[x][16],
-        freeze: excelData[x][16],
+        generic_name: excelData[x][name],
+        unit_desc: excelData[x][unit],
+        unit_cost: excelData[x][unitCost],
+        rate_3_year: excelData[x][b3y],
+        rate_2_year: excelData[x][b2y],
+        rate_1_year: excelData[x][b1y],
+        estimate_qty: excelData[x][estimatedUse],
+        stock_qty: excelData[x][balance],
+        estimate_buy: excelData[x][estimatedPurchase],
+        q1: excelData[x][period1],
+        q2: excelData[x][period2],
+        q3: excelData[x][period3],
+        q4: excelData[x][period4],
+        qty: excelData[x][qty],
+        amount: excelData[x][cost],
+        freeze: excelData[x][freeze],
         create_by: req.decoded.people_user_id
       }
       _data.push(obj);
