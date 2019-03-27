@@ -1,3 +1,4 @@
+/// <reference path="../typings.d.ts"/>
 import * as path from 'path';
 let envPath = path.join(__dirname, '../../mmis-config');
 require('dotenv').config(({ path: envPath }));
@@ -46,37 +47,6 @@ app.use(protect.express.xss({
   loggerFunction: console.error
 }));
 
-// Database connection string
-let dbConnection: MySqlConnectionConfig = {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  multipleStatements: true
-}
-
-// Database connection
-app.use((req, res, next) => {
-  req.db = Knex({
-    client: 'mysql',
-    connection: dbConnection,
-    pool: {
-      min: 0,
-      max: 7,
-      afterCreate: (conn, done) => {
-        conn.query(`SET NAMES ${process.env.DB_ENCODING}`, (err) => {
-          done(err, conn);
-        });
-      }
-    },
-    debug: process.env.SQL_DEBUG || true,
-    acquireConnectionTimeout: 5000
-  });
-
-  next();
-});
-
 let checkAuth = (req, res, next) => {
   let token: string = null;
   if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -119,6 +89,35 @@ let adminAuth = (req, res, next) => {
     res.send({ ok: false, error: error.message });
   }
 }
+
+let dbConnection: MySqlConnectionConfig = {
+  host: process.env.DB_HOST,
+  port: +process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  multipleStatements: true
+}
+
+app.use((req, res, next) => {
+  req.db = Knex({
+    client: 'mysql',
+    connection: dbConnection,
+    pool: {
+      min: 0,
+      max: 7,
+      afterCreate: (conn, done) => {
+        conn.query('SET NAMES utf8', (err) => {
+          done(err, conn);
+        });
+      }
+    },
+    debug: true,
+    acquireConnectionTimeout: 5000
+  });
+
+  next();
+});
 
 // Routing
 app.use('/standard', checkAuth, stdRoute);

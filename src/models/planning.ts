@@ -127,7 +127,7 @@ export default class PlanningModel {
             , (q4*conversion_qty), (qty*conversion_qty), amount, freeze
             , create_date, update_date, create_by, update_by
       from bm_planning_tmp
-      where uuid = ?
+      where uuid = ? and generic_id != '' group by generic_id
     `;
     return knex.raw(sql, [headerId, _uuid]);
   }

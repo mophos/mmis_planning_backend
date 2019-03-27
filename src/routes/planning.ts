@@ -371,6 +371,7 @@ const insertPlanning = (async (db: Knex, _header: any, _uuid: any, peopleUserId:
   }
   let rs: any = await planningModel.insertPlanningHeader(db, header);
   let headerId = rs[0];
+  console.log('xczxcxzcxzczxcxzczxcxczxczxcxzczxcxzczx', headerId)
   await planningModel.insertPlanningDetailFromTmp(db, headerId, _uuid);
 
   if (refHeaderId) await planningModel.changePlanningInactive(db, refHeaderId);
