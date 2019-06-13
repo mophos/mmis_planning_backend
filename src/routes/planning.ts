@@ -9,7 +9,7 @@ import * as fse from 'fs-extra';
 import * as json2xls from 'json2xls';
 import * as multer from 'multer';
 import * as rimraf from 'rimraf';
-
+import * as _ from 'lodash';
 import PlanningModel from '../models/planning';
 import ReportModel from '../models/report';
 
@@ -156,13 +156,31 @@ router.get('/year', async (req, res, next) => {
   }
 });
 
+router.post('/forecast', async (req, res, next) => {
+  let db = req.db;
+  let forecastYear = req.body.year;
+  let warehouseId = req.decoded.warehouseId;
+
+  try {
+    await planningModel.callForecast(db, forecastYear, warehouseId);
+    res.send({ ok: true });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
 router.get('/forecast/:genericId/:year', async (req, res, next) => {
   let db = req.db;
   let genericId = req.params.genericId;
   let forecastYear = req.params.year;
+  let tmpId = req.query.tmpId;
+  let warehouseId = req.decoded.warehouseId;
 
   try {
-    let rs: any = await planningModel.getForecast(db, genericId, forecastYear);
+    let _tmpId = tmpId === 'undefined' ? null : +tmpId;
+    let rs: any = await planningModel.getForecast(db, genericId, forecastYear, _tmpId, warehouseId);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -175,7 +193,9 @@ router.post('/process', async (req, res, next) => {
   let db = req.db;
   let planningYear = req.body.year;
   let _uuid = req.body.uuid;
+  let genericTypeIds = req.body.genericTypeIds;
   let genericGroups = req.decoded.generic_type_id;
+  let warehouseId = req.decoded.warehouseId;
 
   try {
     if (genericGroups) {
@@ -186,43 +206,47 @@ router.post('/process', async (req, res, next) => {
         _ggs.push(v);
       });
 
-      await planningModel.callForecast(db, planningYear);
-      let rs: any = await planningModel.getForecastList(db, planningYear, _ggs);
-      let data = [];
-      for (const r of rs) {
-        let obj: any = {};
-        obj.uuid = _uuid;
-        obj.generic_id = r.generic_id;
-        obj.generic_name = r.generic_name;
-        obj.unit_generic_id = r.planning_unit_generic_id;
-        obj.unit_desc = `${r.from_unit_name} (${r.conversion_qty} ${r.to_unit_name})`;
-        obj.unit_cost = r.cost;
-        obj.conversion_qty = r.conversion_qty;
-        obj.primary_unit_id = r.to_unit_id;
-        obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
-        obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
-        obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
-        obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
-        obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
-        obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
-        obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
-        obj.q1 = Math.round(r.y4q1 / r.conversion_qty);
-        obj.q2 = Math.round(r.y4q2 / r.conversion_qty);
-        obj.q3 = Math.round(r.y4q3 / r.conversion_qty);
-        obj.q4 = Math.round(r.y4q4 / r.conversion_qty);
-        obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
-        obj.amount = obj.qty * obj.unit_cost;
-        // obj.bid_type_id = r.planning_method;
-        // obj.bid_type_name = r.bid_type_name;
-        obj.freeze = r.planning_freeze ? 'Y' : 'N';
-        obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
-        obj.create_by = req.decoded.people_user_id;
-        obj.generic_type_id = r.generic_type_id;
-        data.push(obj);
+      if (genericTypeIds.length) {
+        // await planningModel.callForecast(db, planningYear);
+        let rs: any = await planningModel.getForecastList(db, planningYear, genericTypeIds, warehouseId);
+        let data = [];
+        for (const r of rs) {
+          let obj: any = {};
+          obj.uuid = _uuid;
+          obj.generic_id = r.generic_id;
+          obj.generic_name = r.generic_name;
+          obj.unit_generic_id = r.planning_unit_generic_id;
+          obj.unit_desc = `${r.from_unit_name} (${r.conversion_qty} ${r.to_unit_name})`;
+          obj.unit_cost = r.cost;
+          obj.conversion_qty = r.conversion_qty;
+          obj.primary_unit_id = r.to_unit_id;
+          obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
+          obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
+          obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
+          obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
+          obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
+          obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
+          obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
+          obj.q1 = Math.round(r.y4q1 / r.conversion_qty);
+          obj.q2 = Math.round(r.y4q2 / r.conversion_qty);
+          obj.q3 = Math.round(r.y4q3 / r.conversion_qty);
+          obj.q4 = Math.round(r.y4q4 / r.conversion_qty);
+          obj.qty = obj.q1 + obj.q2 + obj.q3 + obj.q4;
+          obj.amount = obj.qty * obj.unit_cost;
+          // obj.bid_type_id = r.planning_method;
+          // obj.bid_type_name = r.bid_type_name;
+          obj.freeze = r.planning_freeze ? 'Y' : 'N';
+          obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
+          obj.create_by = req.decoded.people_user_id;
+          obj.generic_type_id = r.generic_type_id;
+          data.push(obj);
+        }
+        await planningModel.clearPlanningTmp(db, _uuid);
+        await planningModel.insertPlanningTmp(db, data);
+        res.send({ ok: true });
+      } else {
+        res.send({ ok: false, error: 'กรุณาเลือกประเภทหมวดสินค้า' });
       }
-      await planningModel.clearPlanningTmp(db, _uuid);
-      await planningModel.insertPlanningTmp(db, data);
-      res.send({ ok: true });
     } else {
       res.send({ ok: false, error: 'ไม่พบการกำหนดเงื่อนไขประเภทสินค้า' });
     }
@@ -296,6 +320,20 @@ router.delete('/tmp/:tmpId', async (req, res, next) => {
 
   try {
     let rs = await planningModel.deletePlanningTmp(db, [tmpId]);
+    res.send({ ok: true });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
+router.delete('/', async (req, res, next) => {
+  let db = req.db;
+  let planningId = req.query.planningId;
+
+  try {
+    let rs = await planningModel.removePlanning(db, planningId);
     res.send({ ok: true });
   } catch (error) {
     res.send({ ok: false, error: error.message });
@@ -381,7 +419,7 @@ router.post('/adjust-amount', async (req, res, next) => {
     let tmpIds = [];
 
     for (const r of rows) {
-      if (adjustAmount < 0) {
+      if (adjustAmount < 0 || r.unit_cost === 0) {
         r.q1 = 0;
         r.q2 = 0;
         r.q3 = 0;
@@ -432,10 +470,11 @@ router.post('/copy', async (req, res, next) => {
   let db = req.db;
   let planningHeaderId = req.body.headerId;
   let adjustPercent = req.body.percent || 0;
+  let planningYear = req.body.year;
   let _uuid = req.body.uuid;
 
   try {
-    let rs: any = await planningModel.getPlanningDetail(db, planningHeaderId);
+    let rs: any = await planningModel.getPlanningForCopy(db, planningHeaderId, planningYear);
     let data = [];
     for (const r of rs) {
       let obj: any = {};
@@ -447,13 +486,13 @@ router.post('/copy', async (req, res, next) => {
       obj.unit_cost = r.unit_cost;
       obj.conversion_qty = r.conversion_qty;
       obj.primary_unit_id = r.primary_unit_id;
-      obj.rate_1_year = Math.round(r.rate_1_year / r.conversion_qty);
-      obj.rate_2_year = Math.round(r.rate_2_year / r.conversion_qty);
-      obj.rate_3_year = Math.round(r.rate_3_year / r.conversion_qty);
-      obj.estimate_qty = Math.round(r.estimate_qty / r.conversion_qty);
+      obj.rate_1_year = Math.round(r.sumy1 / r.conversion_qty);
+      obj.rate_2_year = Math.round(r.sumy2 / r.conversion_qty);
+      obj.rate_3_year = Math.round(r.sumy3 / r.conversion_qty);
+      obj.estimate_qty = Math.round(r.sumy4 / r.conversion_qty);
       obj.stock_qty = Math.round(r.stock_qty / r.conversion_qty);
-      obj.inventory_date = moment(r.inventory_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.estimate_buy = Math.round(r.estimate_buy / r.conversion_qty);
+      obj.inventory_date = moment(r.process_date).format('YYYY-MM-DD HH:mm:ss');
+      obj.estimate_buy = Math.round(r.buy_qty / r.conversion_qty);
       obj.q1 = Math.round(r.q1 / r.conversion_qty);
       obj.q2 = Math.round(r.q2 / r.conversion_qty);
       obj.q3 = Math.round(r.q3 / r.conversion_qty);
@@ -463,10 +502,10 @@ router.post('/copy', async (req, res, next) => {
       // obj.bid_type_id = r.bid_type_id;
       // obj.bid_type_name = r.bid_type_name;
       obj.freeze = r.freeze;
-      obj.create_date = moment(r.create_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.update_date = moment(r.update_date).format('YYYY-MM-DD HH:mm:ss');
-      obj.create_by = r.create_by;
-      obj.update_by = r.update_by;
+      obj.create_date = moment().format('YYYY-MM-DD HH:mm:ss');
+      obj.update_date = moment().format('YYYY-MM-DD HH:mm:ss');
+      obj.create_by = req.decoded.people_user_id;
+      obj.update_by = req.decoded.people_user_id;
       obj.generic_type_id = r.generic_type_id;
       data.push(obj);
     }
@@ -510,7 +549,10 @@ router.get('/excel/:headerId', async (req, res, next) => {
   for (const r of rows) {
     let obj = {
       '#': i++,
+      'รหัสยา': r.generic_code,
       'รายการ': r.generic_name,
+      'หมวดสินค้า': r.generic_type_name,
+      'ประเภทสินค้า': r.generic_hosp_name,
       'หน่วย': r.unit_desc,
       'ราคาต่อหน่วย': r.unit_cost,
       'ย้อนหลัง3ปี': r.rate_3_year,
@@ -562,47 +604,45 @@ router.post('/excel', upload.single('file'), async (req, res, next) => {
   let maxRecord = excelData.length;
 
   let header = excelData[0];
-
-  if (header[0] === '#' &&
-    header[1] === 'รายการ' &&
-    header[2] === 'หน่วย' &&
-    header[3] === 'ราคาต่อหน่วย' &&
-    header[4] === 'ย้อนหลัง3ปี' &&
-    header[5] === 'ย้อนหลัง2ปี' &&
-    header[6] === 'ย้อนหลัง1ปี' &&
-    header[7] === 'ประมาณการใช้' &&
-    header[8] === 'ยอดคงคลัง' &&
-    header[9] === 'ประมาณการซื้อ' &&
-    header[10] === 'งวดที่1' &&
-    header[11] === 'งวดที่2' &&
-    header[12] === 'งวดที่3' &&
-    header[13] === 'งวดที่4' &&
-    header[14] === 'จำนวนรวม' &&
-    header[15] === 'มูลค่ารวม' &&
-    // header[16] === 'การจัดซื้อ' &&
-    header[16] === 'Freeze') {
+  const name = _.indexOf(header, 'รายการ');
+  const unit = _.indexOf(header, 'หน่วย');
+  const unitCost = _.indexOf(header, 'ราคาต่อหน่วย');
+  const b3y = _.indexOf(header, 'ย้อนหลัง3ปี');
+  const b2y = _.indexOf(header, 'ย้อนหลัง2ปี');
+  const b1y = _.indexOf(header, 'ย้อนหลัง1ปี');
+  const estimatedUse = _.indexOf(header, 'ประมาณการใช้');
+  const balance = _.indexOf(header, 'ยอดคงคลัง');
+  const estimatedPurchase = _.indexOf(header, 'ประมาณการซื้อ');
+  const period1 = _.indexOf(header, 'งวดที่1');
+  const period2 = _.indexOf(header, 'งวดที่2');
+  const period3 = _.indexOf(header, 'งวดที่3');
+  const period4 = _.indexOf(header, 'งวดที่4');
+  const qty = _.indexOf(header, 'จำนวนรวม');
+  const cost = _.indexOf(header, 'มูลค่ารวม');
+  const freeze = _.indexOf(header, 'Freeze');
+  if (name > -1 && unit > -1 && unitCost > -1 && b3y > -1 && b2y > -1 && b1y > -1 && estimatedUse > -1 && balance > -1 && estimatedPurchase > -1 && period1 > -1 && period2 > -1 &&
+    period3 > -1 && period4 > -1 && qty > -1 && cost > -1 && freeze > -1) {
 
     let _data: any = [];
     for (let x = 1; x < maxRecord; x++) {
       let obj: any = {
         uuid: _uuid,
-        generic_name: excelData[x][1],
-        unit_desc: excelData[x][2],
-        unit_cost: excelData[x][3],
-        rate_3_year: excelData[x][4],
-        rate_2_year: excelData[x][5],
-        rate_1_year: excelData[x][6],
-        estimate_qty: excelData[x][7],
-        stock_qty: excelData[x][8],
-        estimate_buy: excelData[x][9],
-        q1: excelData[x][10],
-        q2: excelData[x][11],
-        q3: excelData[x][12],
-        q4: excelData[x][13],
-        qty: excelData[x][14],
-        amount: excelData[x][15],
-        // bid_type_name: excelData[x][16],
-        freeze: excelData[x][16],
+        generic_name: excelData[x][name],
+        unit_desc: excelData[x][unit],
+        unit_cost: excelData[x][unitCost],
+        rate_3_year: excelData[x][b3y],
+        rate_2_year: excelData[x][b2y],
+        rate_1_year: excelData[x][b1y],
+        estimate_qty: excelData[x][estimatedUse],
+        stock_qty: excelData[x][balance],
+        estimate_buy: excelData[x][estimatedPurchase],
+        q1: excelData[x][period1],
+        q2: excelData[x][period2],
+        q3: excelData[x][period3],
+        q4: excelData[x][period4],
+        qty: excelData[x][qty],
+        amount: excelData[x][cost],
+        freeze: excelData[x][freeze],
         create_by: req.decoded.people_user_id
       }
       _data.push(obj);

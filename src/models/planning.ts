@@ -86,6 +86,27 @@ export default class PlanningModel {
       .where('planning_hdr_id', headerId);
   }
 
+  getPlanningForCopy(knex: Knex, headerId: any, planningYear: any) {
+    return knex('bm_planning_detail as pd')
+      .select('mg.generic_name', 'mg.generic_type_id'
+        , 'pd.generic_id', 'pd.unit_generic_id', 'pd.unit_cost', 'pd.primary_unit_id'
+        , 'pd.q1', 'pd.q2', 'pd.q3', 'pd.q4', 'pd.qty', 'pd.freeze'
+        , 'pf.sumy1', 'pf.sumy2', 'pf.sumy3', 'pf.sumy4', 'pf.stock_qty', 'pf.process_date', 'pf.buy_qty'
+        // , 'bt.bid_name as bid_type_name'
+        // , knex.raw(`CONCAT(uf.unit_name, ' (', ug.qty, ' ', ut.unit_name, ')') as unit_desc`)
+        , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
+        , 'gt.generic_type_name', 'ga.account_name')
+      .join('mm_generics as mg', 'mg.generic_id', 'pd.generic_id')
+      // .join('l_bid_type as bt', 'bt.bid_id', 'pd.bid_type_id')
+      .join('mm_unit_generics as ug', 'ug.unit_generic_id', 'pd.unit_generic_id')
+      .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
+      .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
+      .join('mm_generic_types as gt', 'gt.generic_type_id', 'mg.generic_type_id')
+      .joinRaw(`join bm_planning_forecast as pf on pf.generic_id = pd.generic_id and pf.forecast_year = '${planningYear}' `)
+      .leftJoin('mm_generic_accounts as ga', 'ga.account_id', 'mg.account_id')
+      .where('planning_hdr_id', headerId);
+  }
+
   insertPlanningDetail(knex: Knex, data: any) {
     return knex('bm_planning_detail')
       .insert(data);
@@ -106,7 +127,7 @@ export default class PlanningModel {
             , (q4*conversion_qty), (qty*conversion_qty), amount, freeze
             , create_date, update_date, create_by, update_by
       from bm_planning_tmp
-      where uuid = ?
+      where uuid = ? and generic_id != '' group by generic_id
     `;
     return knex.raw(sql, [headerId, _uuid]);
   }
@@ -129,10 +150,22 @@ export default class PlanningModel {
       .select('planning_year');
   }
 
-  getForecast(knex: Knex, genericId: any, forecastYear: any) {
-    return knex('bm_planning_forecast')
-      .where('generic_id', genericId)
-      .andWhere('forecast_year', forecastYear)
+  getForecast(knex: Knex, genericId: any, forecastYear: any, tmpId: any, warehouseId: any) {
+    if (tmpId) { //edit row
+      return knex('bm_planning_forecast as pf')
+        .select('pf.*', knex.raw('IFNULL(pt.q1 * pt.conversion_qty, pf.y4q1) as y4q1')
+          , knex.raw('IFNULL(pt.q2 * pt.conversion_qty, pf.y4q2) as y4q2')
+          , knex.raw('IFNULL(pt.q3 * pt.conversion_qty, pf.y4q3) as y4q3')
+          , knex.raw('IFNULL(pt.q4 * pt.conversion_qty, pf.y4q4) as y4q4'))
+        .joinRaw(`left join bm_planning_tmp as pt on pt.generic_id = pf.generic_id and pt.tmp_id = ${tmpId}`)
+        .where('pf.generic_id', genericId)
+        .andWhere('pf.forecast_year', forecastYear);
+    } else { //new row
+      return knex('bm_planning_forecast as pf')
+        .where('pf.generic_id', genericId)
+        .andWhere('pf.warehouse_id', warehouseId)
+        .andWhere('pf.forecast_year', forecastYear);
+    }
   }
 
   getPlanningHistory(knex: Knex, headerId: any) {
@@ -142,11 +175,11 @@ export default class PlanningModel {
       .orderBy('ph.planning_hdr_id', 'desc');
   }
 
-  callForecast(knex: Knex, planningYear: any) {
-    return knex.raw(`call forecast(${planningYear})`);
+  callForecast(knex: Knex, planningYear: any, warehouseId: any) {
+    return knex.raw(`call forecast_v2(${planningYear}, ${warehouseId})`);
   }
 
-  getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[]) {
+  getForecastList(knex: Knex, forecastYear: any, _genericGroups: any[], warehouseId: any) {
     let query = knex('bm_planning_forecast as pf')
       .select('pf.*', 'mg.generic_name', 'ug.to_unit_id', 'mg.generic_type_id'
         , 'uf.unit_name as from_unit_name', 'ut.unit_name as to_unit_name', 'ug.qty as conversion_qty'
@@ -157,7 +190,10 @@ export default class PlanningModel {
       .join('mm_units as uf', 'uf.unit_id', 'ug.from_unit_id')
       .join('mm_units as ut', 'ut.unit_id', 'ug.to_unit_id')
       .where('pf.forecast_year', forecastYear)
-      .andWhere('mg.is_planning', 'Y');
+      .andWhere('pf.warehouse_id', warehouseId)
+      .andWhere('mg.is_planning', 'Y')
+      .andWhere('mg.is_active', 'Y')
+      .andWhere('mg.mark_deleted', 'N');
     if (_genericGroups) {
       query.whereIn('mg.generic_type_id', _genericGroups);
     }
@@ -181,6 +217,12 @@ export default class PlanningModel {
       .delete();
   }
 
+  removePlanning(knex: Knex, id: any) {
+    return knex('bm_planning_header')
+      .where('planning_hdr_id', id)
+      .delete();
+  }
+
   clearPlanningTmp(knex: Knex, _uuid: any) {
     return knex('bm_planning_tmp')
       .where('uuid', _uuid)
@@ -188,14 +230,17 @@ export default class PlanningModel {
   }
 
   getPlanningTmp(knex: Knex, _uuid: any, query: any, genericType: any, limit: number, offset: number = 0) {
-    let sql = knex('bm_planning_tmp')
-      .where('uuid', _uuid);
+    let sql = knex('bm_planning_tmp as b')
+      .select('b.*', 'mg.working_code as generic_code', 'mgh.name as generic_hosp_name')
+      .join('mm_generics as mg', 'b.generic_id', 'mg.generic_id')
+      .leftJoin('mm_generic_hosp as mgh', 'mg.generic_hosp_id', 'mgh.id')
+      .where('b.uuid', _uuid);
     if (query) {
       let _query = `%${query}%`;
-      sql.andWhere('generic_name', 'like', _query);
+      sql.andWhere('b.generic_name', 'like', _query);
     }
     if (genericType) {
-      sql.andWhere('generic_type_id', genericType);
+      sql.andWhere('b.generic_type_id', genericType);
     }
     if (limit) {
       sql.limit(limit);
