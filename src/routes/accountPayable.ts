@@ -8,9 +8,10 @@ const accountPayableModel = new AccountPayableModel();
 const serialModel = new SerialModel;
 router.get('/', async (req, res, next) => {
   const db = req.db;
+  const query = req.query.query;
   const warehouseId = req.decoded.warehouseId;
   try {
-    const rs: any = await accountPayableModel.getList(db, warehouseId);
+    const rs: any = await accountPayableModel.getList(db, warehouseId, query);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });

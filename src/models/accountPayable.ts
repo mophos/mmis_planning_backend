@@ -2,9 +2,11 @@ import * as Knex from 'knex';
 
 export default class AccountPayableModel {
 
-  getList(knex: Knex, warehouseId) {
+  getList(knex: Knex, warehouseId, query) {
+    const _query = `%${query}%`;
     return knex('ar_payables')
       .where('warehouse_id', warehouseId)
+      .where('payable_code', 'like', _query)
       .orderBy('payable_id', 'DESC')
   }
 
