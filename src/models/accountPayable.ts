@@ -107,6 +107,7 @@ export default class AccountPayableModel {
       .join('mm_generics as mg', 'mg.generic_id', 'mp.generic_id')
       .where('p.payable_id', payableId)
       .groupBy('r.receive_id')
+      .orderBy('pd.payable_detail_id');
   }
   comma(num) {
     if (num === null) { return ('0.00'); }
