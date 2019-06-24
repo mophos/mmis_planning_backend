@@ -3,10 +3,22 @@ import * as Knex from 'knex';
 export default class AccountPayableModel {
 
   getList(knex: Knex, warehouseId, query) {
+
     const _query = `%${query}%`;
+    const payableId = knex('ar_payable_details as pd')
+      .select('pd.payable_id')
+      .join('wm_receives as r', 'pd.receive_id', 'r.receive_id')
+      .where(w => {
+        w.where('r.receive_code', 'like', _query)
+          .orWhere('r.delivery_code', 'like', _query)
+      });
     return knex('ar_payables')
       .where('warehouse_id', warehouseId)
-      .where('payable_code', 'like', _query)
+      .where(w => {
+        w.where('payable_code', 'like', _query)
+          .orWhereIn('payable_id', payableId)
+      })
+
       .orderBy('payable_id', 'DESC')
   }
 
