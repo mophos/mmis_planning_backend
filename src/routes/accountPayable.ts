@@ -123,8 +123,9 @@ router.get('/detail', async (req, res, next) => {
 router.get('/receive', async (req, res, next) => {
   const db = req.db;
   const query = req.query.query;
+  const warehouseId = req.decoded.warehouseId;
   try {
-    const rs: any = await accountPayableModel.getReceive(db, query);
+    const rs: any = await accountPayableModel.getReceive(db, query, warehouseId);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, error: error.message });

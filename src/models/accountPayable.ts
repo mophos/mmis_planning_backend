@@ -43,7 +43,7 @@ export default class AccountPayableModel {
       .orderBy('p.payable_id', 'DESC')
   }
 
-  getReceive(knex: Knex, query) {
+  getReceive(knex: Knex, query, warehouseId) {
     const _q = `%${query}%`
     let totalPrice = knex('wm_receive_detail as rd')
       .select(knex.raw('sum(rd.cost*rd.receive_qty)')).as('total_price')
@@ -60,7 +60,7 @@ export default class AccountPayableModel {
           .orWhere('po.purchase_order_number', 'like', _q)
           .orWhere('po.purchase_order_book_number', 'like', _q)
       })
-      // .where('po.purchase_order_status', 'COMPLETED')
+      .where('po.warehouse_id', warehouseId)
       .where('po.is_cancel', 'N')
       .where('r.is_cancel', 'N');
   }
