@@ -3,6 +3,7 @@ import * as path from 'path';
 let envPath = path.join(__dirname, '../../mmis-config');
 require('dotenv').config(({ path: envPath }));
 
+import { NextFunction, Request, Response } from 'express';
 import * as express from 'express';
 import * as favicon from 'serve-favicon';
 import * as logger from 'morgan';
@@ -129,13 +130,37 @@ app.use('/planning', checkAuth, adminAuth, planningRoute);
 app.use('/bid-type', checkAuth, adminAuth, bidTypeRoute);
 app.use('/', index);
 
-app.use((req, res, next) => {
+// app.use((req, res, next) => {
+//   var err = new Error('Not Found');
+//   err['status'] = 404;
+//   next(err);
+// });
+
+// app.use((err: Error, req, res, next) => {
+//   console.log(err, 'xxxxxxxxxxxxxxxx');
+
+//   let errorMessage;
+//   switch (err['code']) {
+//     case 'ER_DUP_ENTRY':
+//       console.log('xxxxxxxxxxx');
+
+//       errorMessage = 'ข้อมูลซ้ำ';
+//       break;
+//     default:
+//       console.log('12312421512');
+//       errorMessage = err;
+//       res.status(err['status'] || 500);
+//   }
+//   res.send({ ok: false, error: errorMessage });
+// });
+
+app.use((req: Request, res: Response, next: NextFunction) => {
   var err = new Error('Not Found');
   err['status'] = 404;
   next(err);
 });
 
-app.use((err: Error, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.log(err);
   let errorMessage;
   switch (err['code']) {

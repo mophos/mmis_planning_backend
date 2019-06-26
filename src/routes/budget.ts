@@ -3,7 +3,7 @@ import BudgetModel from '../models/budget';
 import ReportModel from '../models/report';
 import * as moment from 'moment';
 import * as json2xls from 'json2xls';
-
+import * as co from 'co-express';
 const router = express.Router();
 const budgetModel = new BudgetModel();
 const reportModel = new ReportModel();
@@ -234,6 +234,67 @@ router.post('/sub-total', async (req, res, next) => {
     res.send({ ok: true });
   } catch (error) {
     console.log(error)
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
+router.get('/get-warehouse', async (req, res, next) => {
+  let db = req.db;
+
+  try {
+    let rs = await budgetModel.getWarehouse(db);
+    console.log(rs);
+    res.send({ ok: true, rows: rs });
+  } catch (error) {
+    console.log(error)
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
+
+router.get('/get-budget-warehouse/:bgdetail_id', async (req, res, next) => {
+  let bgdetail_id = req.params.bgdetail_id;
+  let db = req.db;
+
+  try {
+    let rs = await budgetModel.getBudgetWarehouse(db, bgdetail_id);
+    res.send({ ok: true, rows: rs });
+  } catch (error) {
+    res.send({ ok: false, error: error.message });
+  } finally {
+    db.destroy();
+  }
+});
+
+router.post('/save-subbudget-warehouse',co( async ( req, res, next) => {
+  let db = req.db;
+  let subbudgetWarehouse = req.body.data;
+  try {
+    let _trx: any = {};
+    _trx.bgdetail_id = subbudgetWarehouse.bgdetail_id;
+    _trx.warehouse_id = subbudgetWarehouse.warehouse_id;
+    await budgetModel.insertBudgetWarehouse(db, _trx);
+    res.send({ ok: true });
+  } catch (error) {
+    throw error;
+    // console.log(error)
+    // res.send({ ok: false, error: error });
+  } finally {
+    db.destroy();
+  }
+}));
+
+router.delete('/delete-subbudget-warehouse', async (req, res, next) => {
+  let subBudget = req.query.subBudget;
+  let db = req.db;
+  try {
+    await budgetModel.deleteBudgetWarehouse(db, subBudget);
+    res.send({ ok: true });
+  } catch (error) {
     res.send({ ok: false, error: error.message });
   } finally {
     db.destroy();
