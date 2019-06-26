@@ -27,6 +27,7 @@ import budgetSourceRoute from './routes/budgetSource';
 import planningRoute from './routes/planning';
 import stdRoute from './routes/standard';
 import bidTypeRoute from './routes/bidType';
+import accountPayableRoute from './routes/accountPayable';
 
 const app: express.Express = express();
 
@@ -128,6 +129,7 @@ app.use('/budget-subtype', checkAuth, adminAuth, budgetSubTypeRoute);
 app.use('/budget-source', checkAuth, adminAuth, budgetSourceRoute);
 app.use('/planning', checkAuth, adminAuth, planningRoute);
 app.use('/bid-type', checkAuth, adminAuth, bidTypeRoute);
+app.use('/account-payable', checkAuth, adminAuth, accountPayableRoute);
 app.use('/', index);
 
 // app.use((req, res, next) => {
