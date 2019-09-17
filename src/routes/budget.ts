@@ -108,6 +108,25 @@ router.post('/approve', async (req, res, next) => {
     _detail.status = 'APPROVE';
     _detail.update_by = req.decoded.people_user_id;
     await budgetModel.approveBudget(db, budgetDetailIds, _detail);
+    for (const detailid of budgetDetailIds) {
+      var bgDetail = await budgetModel.getBudgetDetail2(db, detailid)
+      if(bgDetail[0].length > 0){
+        var bgdId = await budgetModel.getMainBudgetDetail(db, bgDetail[0].bgtype_id, bgDetail[0].bgtypesub_id)
+        var rsB = await budgetModel.getBgTransaction(db, bgdId[0].bgdetail_id)
+        var rs = await budgetModel.getTransactionBalance(db, bgdId[0].bgdetail_id)
+        let _trx: any = {};
+        _trx.bgdetail_id = bgdId[0].bgdetail_id;
+        _trx.incoming_balance = rsB[0].amount - rs[0].total_purchase;
+        _trx.amount = 0 - (bgDetail[0].amount);
+        _trx.balance = _trx.incoming_balance + bgDetail[0].amount;
+        _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
+        _trx.transaction_status = 'ADDED';
+        _trx.remark = 'เพิ่มงบประมาณใหม่' + bgDetail[0].remark;
+        console.log({'_trx':_trx});
+        await budgetModel.insertBudgetTransaction(db, _trx);
+        await budgetModel.insertBudgetTransactionLog(db, _trx);
+      }
+    }
     res.send({ ok: true });
   } catch (error) {
     console.log(error)
@@ -115,8 +134,9 @@ router.post('/approve', async (req, res, next) => {
   } finally {
     db.destroy();
   }
-
 });
+
+
 
 router.get('/year', async (req, res, next) => {
   let db = req.db;
@@ -270,7 +290,7 @@ router.get('/get-budget-warehouse/:bgdetail_id', async (req, res, next) => {
   }
 });
 
-router.post('/save-subbudget-warehouse',co( async ( req, res, next) => {
+router.post('/save-subbudget-warehouse', co(async (req, res, next) => {
   let db = req.db;
   let subbudgetWarehouse = req.body.data;
   try {
