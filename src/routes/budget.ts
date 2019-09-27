@@ -116,13 +116,13 @@ router.post('/approve', async (req, res, next) => {
         var rs = await budgetModel.getTransactionBalance(db, bgdId[0].bgdetail_id)
         let _trx: any = {};
         _trx.bgdetail_id = bgdId[0].bgdetail_id;
+        _trx.budget_amount = rsB[0].amount - bgDetail[0].amount;
         _trx.incoming_balance = rsB[0].amount - rs[0].total_purchase;
         _trx.amount = 0 - (bgDetail[0].amount);
         _trx.balance = _trx.incoming_balance + bgDetail[0].amount;
         _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
         _trx.transaction_status = 'ADDED';
         _trx.remark = 'เพิ่มงบประมาณใหม่' + bgDetail[0].remark;
-        console.log({'_trx':_trx});
         await budgetModel.insertBudgetTransaction(db, _trx);
         await budgetModel.insertBudgetTransactionLog(db, _trx);
       }
