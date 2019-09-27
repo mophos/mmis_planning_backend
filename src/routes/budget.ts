@@ -110,19 +110,26 @@ router.post('/approve', async (req, res, next) => {
     for (const detailid of budgetDetailIds) {
       await budgetModel.approveBudget(db, [detailid], _detail);
       var bgDetail = await budgetModel.getBudgetDetail2(db, detailid)
+      console.log(bgDetail);
+      
       if(bgDetail.length > 0){
-        var bgdId = await budgetModel.getMainBudgetDetail(db, bgDetail[0].bgtype_id, bgDetail[0].bgtypesub_id)
-        var rsB = await budgetModel.getBgTransaction(db, bgdId[0].bgdetail_id)
+        var bgdId = await budgetModel.getMainBudgetDetail(db, bgDetail[0].bgtype_id, bgDetail[0].bgtypesub_id, bgDetail[0].bg_year)
+        // var rsB = await budgetModel.getBgTransaction(db, bgdId[0].bgdetail_id)
         var rs = await budgetModel.getTransactionBalance(db, bgdId[0].bgdetail_id)
         let _trx: any = {};
         _trx.bgdetail_id = bgdId[0].bgdetail_id;
-        _trx.budget_amount = rsB[0].amount - bgDetail[0].amount;
-        _trx.incoming_balance = rsB[0].amount - rs[0].total_purchase;
+        console.log(bgdId[0].bgdetail_id);
+        _trx.budget_amount = bgdId[0].amount - bgDetail[0].amount;
+        console.log(bgdId[0].amount);
+        console.log( bgDetail[0].amount);
+        _trx.incoming_balance = bgdId[0].amount - bgDetail[0].amount - rs[0].total_purchase || 0;
+        console.log(bgdId[0].amount);
+        console.log(rs[0].total_purchase);
         _trx.amount = 0 - (bgDetail[0].amount);
         _trx.balance = _trx.incoming_balance + bgDetail[0].amount;
         _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
         _trx.transaction_status = 'ADDED';
-        _trx.remark = 'เพิ่มงบประมาณใหม่' + bgDetail[0].remark;
+        _trx.remark = 'เพิ่มงบประมาณใหม่' + bgDetail[0].remark ? bgDetail[0].remark : '' ;
         await budgetModel.insertBudgetTransaction(db, _trx);
         await budgetModel.insertBudgetTransactionLog(db, _trx);
       }
