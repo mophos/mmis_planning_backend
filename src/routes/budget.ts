@@ -107,10 +107,10 @@ router.post('/approve', async (req, res, next) => {
     let _detail: any = {};
     _detail.status = 'APPROVE';
     _detail.update_by = req.decoded.people_user_id;
-    await budgetModel.approveBudget(db, budgetDetailIds, _detail);
     for (const detailid of budgetDetailIds) {
+      await budgetModel.approveBudget(db, [detailid], _detail);
       var bgDetail = await budgetModel.getBudgetDetail2(db, detailid)
-      if(bgDetail[0].length > 0){
+      if(bgDetail.length > 0){
         var bgdId = await budgetModel.getMainBudgetDetail(db, bgDetail[0].bgtype_id, bgDetail[0].bgtypesub_id)
         var rsB = await budgetModel.getBgTransaction(db, bgdId[0].bgdetail_id)
         var rs = await budgetModel.getTransactionBalance(db, bgdId[0].bgdetail_id)
