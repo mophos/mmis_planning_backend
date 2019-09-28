@@ -46,20 +46,21 @@ export default class BudgetModel {
     return knex('bm_budget_detail').where('bgdetail_id', budgetDetailId).where('status', 'APPROVE')
   }
 
-  getMainBudgetDetail(knex: Knex, budgetTypeId: any, budgetSubTyeId: any) {
-    let query = knex('bm_budget_detail')
+  getMainBudgetDetail(knex: Knex, budgetTypeId: any, budgetSubTyeId: any, budgetYear: any) {
+    let query = knex('view_budget_subtype')
       .where('bgtype_id', budgetTypeId)
       .where('bgtypesub_id', budgetSubTyeId)
+      .where('bg_year', budgetYear)
       .orderBy('bgdetail_id', 'asc')
       .limit(1);
     return query;
   }
 
-  getBgTransaction(knex: Knex, budgetDetailId: any) {
-    return knex('view_budget_subtype as vbg')
-      .where('vbg.bgdetail_id', budgetDetailId)
-      .limit(1);
-  }
+  // getBgTransaction(knex: Knex, budgetDetailId: any) {
+  //   return knex('view_budget_subtype as vbg')
+  //     .where('vbg.bgdetail_id', budgetDetailId)
+  //     .limit(1);
+  // }
   
   getTransactionBalance(knex: Knex, budgetDetailId: any) {
     let query = knex('pc_budget_transection as bt')
