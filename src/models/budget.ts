@@ -51,7 +51,7 @@ export default class BudgetModel {
       .where('bgtype_id', budgetTypeId)
       .where('bgtypesub_id', budgetSubTyeId)
       .where('bg_year', budgetYear)
-      .orderBy('bgdetail_id', 'asc')
+      .orderBy('view_bgdetail_id', 'asc')
       .limit(1);
     return query;
   }
@@ -61,7 +61,7 @@ export default class BudgetModel {
   //     .where('vbg.bgdetail_id', budgetDetailId)
   //     .limit(1);
   // }
-  
+
   getTransactionBalance(knex: Knex, budgetDetailId: any) {
     let query = knex('pc_budget_transection as bt')
       .select(knex.raw('sum(bt.amount) as total_purchase'))
@@ -118,12 +118,16 @@ export default class BudgetModel {
         , knex.raw(`concat(vbg.bgtype_name, ' - ', vbg.bgtypesub_name) as budget_desc`)
         , 'po.purchase_order_number'
         , 'pbt.incoming_balance'
-        , knex.raw(`IF(pbt.transaction_status='SPEND', -1*pbt.amount, IF(pbt.transaction_status='ADDED', -1*pbt.amount, pbt.amount)) as amount`)
+        , knex.raw(`IF(pbt.transaction_status='SPEND', -1*pbt.amount, pbt.amount) as amount`)
         , 'pbt.balance'
         , 'pbt.remark')
-      .join('view_budget_subtype as vbg', 'vbg.bgdetail_id', 'pbt.bgdetail_id')
+      .join('view_budget_subtype as vbg', 'vbg.view_bgdetail_id', 'pbt.view_bgdetail_id')
       .leftJoin('pc_purchasing_order as po', 'po.purchase_order_id', 'pbt.purchase_order_id')
       .where('vbg.bg_year', budgetYear)
+      .where((w) => {
+        w.where('pbt.transaction_status', 'SPEND')
+          .orWhere('pbt.transaction_status', 'ADDED')
+      })
     if (budgetDetailId) {
       query.andWhere('pbt.bgdetail_id', budgetDetailId)
     }
