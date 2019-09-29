@@ -110,28 +110,19 @@ router.post('/approve', async (req, res, next) => {
     for (const detailid of budgetDetailIds) {
       await budgetModel.approveBudget(db, [detailid], _detail);
       var bgDetail = await budgetModel.getBudgetDetail2(db, detailid)
-      console.log(bgDetail);
-
       if (bgDetail.length > 0) {
         var bgdId = await budgetModel.getMainBudgetDetail(db, bgDetail[0].bgtype_id, bgDetail[0].bgtypesub_id, bgDetail[0].bg_year)
-        console.log({'bgdId':bgdId});
-        
         var rs = await budgetModel.getTransactionBalance(db, bgdId[0].view_bgdetail_id)
         let _trx: any = {};
         _trx.view_bgdetail_id = bgdId[0].view_bgdetail_id;
         _trx.bgdetail_id = bgdId[0].bgdetail_id;
-        console.log(bgdId[0].bgdetail_id);
         _trx.appropriation_budget = bgdId[0].amount - bgDetail[0].amount;
-        console.log(bgdId[0].amount);
-        console.log(bgDetail[0].amount);
         _trx.incoming_balance = bgdId[0].amount - bgDetail[0].amount - rs[0].total_purchase || 0;
-        console.log(bgdId[0].amount);
-        console.log(rs[0].total_purchase);
         _trx.amount = (bgDetail[0].amount);
         _trx.balance = _trx.incoming_balance + bgDetail[0].amount;
         _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
         _trx.transaction_status = 'ADDED';
-        _trx.remark = (_trx.view_bgdetail_id ==_trx.bgdetail_id ? 'เพิ่มงบประมาณใหม่' : 'เพิ่มงบประมาณ') + (!bgDetail[0].remark ? '' : '(' + bgDetail[0].remark + ')');
+        _trx.remark = (_trx.view_bgdetail_id == _trx.bgdetail_id ? 'เพิ่มงบประมาณใหม่' : 'เพิ่มงบประมาณ') + (!bgDetail[0].remark ? '' : '(' + bgDetail[0].remark + ')');
         await budgetModel.insertBudgetTransaction(db, _trx);
         // await budgetModel.insertBudgetTransactionLog(db, _trx);
       }
@@ -246,15 +237,18 @@ router.get('/report/sub-total', (req, res, next) => {
       db.destroy();
     });
 });
-
+// ต้องแก้
 router.post('/sub-total', async (req, res, next) => {
   let db = req.db;
   let transactionData = req.body.data;
   try {
+    var viewBg = await budgetModel.getBgTransaction(db, transactionData.bugdetDetailId)
     let _trx: any = {};
-    _trx.bgdetail_id = transactionData.bugdetDetailId;
+    _trx.view_bgdetail_id = viewBg[0].view_bgdetail_id;
+    _trx.xxxbgdetail_id = viewBg[0].xxxbgdetail_id;
     _trx.incoming_balance = transactionData.incomingBalance || 0;
     _trx.amount = transactionData.spendAmount;
+    _trx.appropriation_budget = viewBg[0].amount;
     _trx.balance = _trx.incoming_balance - _trx.amount;
     _trx.date_time = moment().format('YYYY-MM-DD HH:mm:ss');
     _trx.transaction_status = 'SPEND';
