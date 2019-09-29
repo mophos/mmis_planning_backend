@@ -268,7 +268,6 @@ router.get('/get-warehouse', async (req, res, next) => {
 
   try {
     let rs = await budgetModel.getWarehouse(db);
-    console.log(rs);
     res.send({ ok: true, rows: rs });
   } catch (error) {
     console.log(error)
