@@ -174,17 +174,17 @@ export default class BudgetModel {
   getBudgetWarehouse(knex: Knex, bgdetail_id: any) {
     return knex('bm_budget_detail_warehouse as bbdw')
       .select('bbdw.bgdetail_washouers_id',
-        'bbdw.bgdetail_id',
+        'bbdw.view_bgdetail_id',
         'bbdw.warehouse_id',
         'bbt.bgtype_name',
         'bbts.bgtypesub_name',
         'ww.short_code',
         'ww.warehouse_name')
       .join('wm_warehouses as ww', 'ww.warehouse_id', 'bbdw.warehouse_id')
-      .join('bm_budget_detail as bbd', 'bbd.bgdetail_id', 'bbdw.bgdetail_id')
+      .join('bm_budget_detail as bbd', 'bbd.bgdetail_id', 'bbdw.view_bgdetail_id')
       .join('bm_bgtype as bbt', 'bbt.bgtype_id', 'bbd.bgtype_id')
       .join('bm_bgtypesub as bbts', 'bbts.bgtypesub_id', 'bbd.bgtypesub_id')
-      .where('bbdw.bgdetail_id', bgdetail_id)
+      .where('bbdw.view_bgdetail_id', bgdetail_id)
   }
 
   insertBudgetWarehouse(knex: Knex, data: any) {
