@@ -2,7 +2,7 @@ import Knex = require('knex');
 import * as moment from 'moment';
 
 export default class ReportModel {
-  
+
   comma(num) {
     var number = +num
     num = number.toFixed(2);
@@ -38,8 +38,6 @@ export default class ReportModel {
     num = '' + number.toFixed(2);
     let deci = num.substr(num.length - 2, 2);
     num = num.substr(0, num.length - 3);
-    console.log(num)
-    console.log(deci)
     //สร้างอะเรย์เก็บค่าที่ต้องการใช้เอาไว้
     var TxtNumArr = new Array("ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า", "สิบ");
     var TxtDigitArr = new Array("", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน");
