@@ -56,16 +56,16 @@ export default class BudgetModel {
     return query;
   }
 
-  // getBgTransaction(knex: Knex, budgetDetailId: any) {
-  //   return knex('view_budget_subtype as vbg')
-  //     .where('vbg.bgdetail_id', budgetDetailId)
-  //     .limit(1);
-  // }
+  getBgTransaction(knex: Knex, viewBudgetDetailId: any) {
+    return knex('view_budget_subtype as vbg')
+      .where('vbg.view_bgdetail_id', viewBudgetDetailId)
+      .limit(1);
+  }
 
   getTransactionBalance(knex: Knex, budgetDetailId: any) {
     let query = knex('pc_budget_transection as bt')
       .select(knex.raw('sum(bt.amount) as total_purchase'))
-      .where('bt.bgdetail_id', budgetDetailId)
+      .where('bt.view_bgdetail_id', budgetDetailId)
       .where('bt.transaction_status', 'SPEND');
     return query;
   }
@@ -83,7 +83,7 @@ export default class BudgetModel {
       left join (
         select bd.bgtype_id, sum(pbt.amount) order_amt
         from pc_budget_transection pbt
-        join bm_budget_detail bd on bd.bgdetail_id = pbt.bgdetail_id
+        join bm_budget_detail bd on bd.bgdetail_id = pbt.view_bgdetail_id
         where bd.bg_year = ?
         and pbt.transaction_status = 'spend'
         group by bd.bgtype_id
@@ -95,13 +95,13 @@ export default class BudgetModel {
 
   getTotalSubBudget(knex: Knex, budgetYear) {
     let sql = `
-      select bd.bgdetail_id, bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
+      select bd.view_bgdetail_id as bgdetail_id,bd.xxxbgdetail_id, bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
       IFNULL( ( 100 / bd.amount * (bd.amount - od.order_amt)) , 0 ) AS perUsed 
       from view_budget_subtype bd
       left join (
         select bd.bgtype_id, bd.bgtypesub_id, sum(pbt.amount) order_amt
         from pc_budget_transection pbt
-        left join bm_budget_detail bd on bd.bgdetail_id = pbt.bgdetail_id
+        left join bm_budget_detail bd on bd.bgdetail_id = pbt.view_bgdetail_id
         where bd.bg_year = ?
         and pbt.transaction_status = 'spend'
         group by bd.bgtype_id, bd.bgtypesub_id
@@ -129,7 +129,7 @@ export default class BudgetModel {
           .orWhere('pbt.transaction_status', 'ADDED')
       })
     if (budgetDetailId) {
-      query.andWhere('pbt.bgdetail_id', budgetDetailId)
+      query.andWhere('pbt.view_bgdetail_id', budgetDetailId)
     }
     query.orderBy('transection_id', 'desc');
     return query;
@@ -137,7 +137,7 @@ export default class BudgetModel {
 
   getBudgetByYear(knex: Knex, budgetYear: any) {
     return knex('view_budget_subtype')
-      .select('bgdetail_id'
+      .select('view_bgdetail_id'
         , knex.raw(`concat(bgtype_name, ' - ',bgtypesub_name) as budget_desc`))
       .where('bg_year', budgetYear)
       .orderBy('bgtype_name', 'bgtypesub_name');
@@ -151,7 +151,7 @@ export default class BudgetModel {
       left join (
         select bd.bgtype_id, bd.bgtypesub_id, sum(pbt.amount) order_amt
         from pc_budget_transection pbt
-        left join bm_budget_detail bd on bd.bgdetail_id = pbt.bgdetail_id
+        left join bm_budget_detail bd on bd.bgdetail_id = pbt.view_bgdetail_id
         where bd.bg_year = ?
         and pbt.transaction_status = 'spend'
         group by bd.bgtype_id, bd.bgtypesub_id
