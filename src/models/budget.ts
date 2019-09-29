@@ -42,6 +42,34 @@ export default class BudgetModel {
       .update(budgetDetail);
   }
 
+  getBudgetDetail2(knex: Knex, budgetDetailId: any, ) {
+    return knex('bm_budget_detail').where('bgdetail_id', budgetDetailId).where('status', 'APPROVE')
+  }
+
+  getMainBudgetDetail(knex: Knex, budgetTypeId: any, budgetSubTyeId: any, budgetYear: any) {
+    let query = knex('view_budget_subtype')
+      .where('bgtype_id', budgetTypeId)
+      .where('bgtypesub_id', budgetSubTyeId)
+      .where('bg_year', budgetYear)
+      .orderBy('bgdetail_id', 'asc')
+      .limit(1);
+    return query;
+  }
+
+  // getBgTransaction(knex: Knex, budgetDetailId: any) {
+  //   return knex('view_budget_subtype as vbg')
+  //     .where('vbg.bgdetail_id', budgetDetailId)
+  //     .limit(1);
+  // }
+  
+  getTransactionBalance(knex: Knex, budgetDetailId: any) {
+    let query = knex('pc_budget_transection as bt')
+      .select(knex.raw('sum(bt.amount) as total_purchase'))
+      .where('bt.bgdetail_id', budgetDetailId)
+      .where('bt.transaction_status', 'SPEND');
+    return query;
+  }
+
   getBudgetYear(knex: Knex) {
     return knex('bm_budget_detail')
       .distinct('bg_year')
@@ -90,7 +118,7 @@ export default class BudgetModel {
         , knex.raw(`concat(vbg.bgtype_name, ' - ', vbg.bgtypesub_name) as budget_desc`)
         , 'po.purchase_order_number'
         , 'pbt.incoming_balance'
-        , knex.raw(`IF(pbt.transaction_status='SPEND', -1*pbt.amount, pbt.amount) as amount`)
+        , knex.raw(`IF(pbt.transaction_status='SPEND', -1*pbt.amount, IF(pbt.transaction_status='ADDED', -1*pbt.amount, pbt.amount)) as amount`)
         , 'pbt.balance'
         , 'pbt.remark')
       .join('view_budget_subtype as vbg', 'vbg.bgdetail_id', 'pbt.bgdetail_id')
@@ -131,6 +159,11 @@ export default class BudgetModel {
 
   insertBudgetTransaction(knex: Knex, data: any) {
     return knex('pc_budget_transection')
+      .insert(data);
+  }
+
+  insertBudgetTransactionLog(knex: Knex, data: any) {
+    return knex('pc_budget_transection_log')
       .insert(data);
   }
 
