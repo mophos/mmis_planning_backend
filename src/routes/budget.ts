@@ -297,7 +297,7 @@ router.post('/save-subbudget-warehouse', co(async (req, res, next) => {
   let subbudgetWarehouse = req.body.data;
   try {
     let _trx: any = {};
-    _trx.bgdetail_id = subbudgetWarehouse.bgdetail_id;
+    _trx.view_bgdetail_id = subbudgetWarehouse.view_bgdetail_id;
     _trx.warehouse_id = subbudgetWarehouse.warehouse_id;
     await budgetModel.insertBudgetWarehouse(db, _trx);
     res.send({ ok: true });
