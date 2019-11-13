@@ -95,7 +95,7 @@ export default class AccountPayableModel {
   accountPayableByPayableId(knex: Knex, payableId) {
     return knex('ar_payables as p')
       .select('r.delivery_code', 'r.delivery_date', 'po.purchase_order_id', 'po.purchase_order_number', 'po.purchase_order_book_number',
-        'r.receive_code', 'r.delivery_code', 'ml.labeler_id', knex.raw('sum(rd.cost*rd.receive_qty) as cost'),
+        'r.receive_code', 'r.receive_date', 'r.delivery_code', 'ml.labeler_id', knex.raw('sum(rd.cost*rd.receive_qty) as cost'),
         'ml.labeler_name', 'p.payable_date', 'p.payable_code')
       .join('ar_payable_details as pd', 'p.payable_id', 'pd.payable_id')
       .join('wm_receives as r', 'r.receive_id', 'pd.receive_id')

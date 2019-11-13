@@ -149,7 +149,7 @@ router.get('/report', async (req, res, next) => {
       head.payable_code = rs[0].payable_code;
       head.payable_date = moment(rs[0].payable_date).format('DD MMMM ') + (moment(rs[0].payable_date).get('year') + 543);
       for (const i of rs) {
-        i.delivery_date = moment(i.delivery_date).locale('th').format('DD MMM') + (moment(i.delivery_date).get('year') + 543);
+        i.receive_date = moment(i.receive_date).locale('th').format('DD MMM') + (moment(i.receive_date).get('year') + 543);
         sum += i.cost;
         i.cost = accountPayableModel.comma(i.cost);
       }
