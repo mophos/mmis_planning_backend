@@ -54,12 +54,14 @@ export default class AccountPayableModel {
         'po.purchase_order_number', 'po.purchase_order_book_number', totalPrice)
       .join('pc_purchasing_order as po', 'r.purchase_order_id', 'po.purchase_order_id')
       .join('wm_receive_approve as ra', 'r.receive_id', 'ra.receive_id')
+      .leftJoin('ar_payable_details as apd', 'apd.receive_id', 'r.receive_id')
       .where((w) => {
         w.where('r.receive_code', 'like', _q)
           .orWhere('r.delivery_code', 'like', _q)
           .orWhere('po.purchase_order_number', 'like', _q)
           .orWhere('po.purchase_order_book_number', 'like', _q)
       })
+      .whereNull('apd.receive_id')
       .where('po.warehouse_id', warehouseId)
       .where('po.is_cancel', 'N')
       .where('r.is_cancel', 'N');
