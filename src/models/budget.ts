@@ -95,7 +95,7 @@ export default class BudgetModel {
 
   getTotalSubBudget(knex: Knex, budgetYear) {
     let sql = `
-      select bd.view_bgdetail_id as bgdetail_id,bd.xxxbgdetail_id, bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
+      select bd.view_bgdetail_id as bgdetail_id,bd.bgdetail_id, bd.bg_year, bd.bgtype_name, bd.bgtypesub_name, bd.amount, IFNULL(od.order_amt, 0) order_amt,IFNULL( bd.amount - od.order_amt, 0 ) AS total,
       IFNULL( ( 100 / bd.amount * (bd.amount - od.order_amt)) , 0 ) AS perUsed 
       from view_budget_subtype bd
       left join (

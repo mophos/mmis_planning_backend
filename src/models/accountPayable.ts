@@ -54,12 +54,14 @@ export default class AccountPayableModel {
         'po.purchase_order_number', 'po.purchase_order_book_number', totalPrice)
       .join('pc_purchasing_order as po', 'r.purchase_order_id', 'po.purchase_order_id')
       .join('wm_receive_approve as ra', 'r.receive_id', 'ra.receive_id')
+      .leftJoin('ar_payable_details as apd', 'apd.receive_id', 'r.receive_id')
       .where((w) => {
         w.where('r.receive_code', 'like', _q)
           .orWhere('r.delivery_code', 'like', _q)
           .orWhere('po.purchase_order_number', 'like', _q)
           .orWhere('po.purchase_order_book_number', 'like', _q)
       })
+      .whereNull('apd.receive_id')
       .where('po.warehouse_id', warehouseId)
       .where('po.is_cancel', 'N')
       .where('r.is_cancel', 'N');
@@ -95,7 +97,7 @@ export default class AccountPayableModel {
   accountPayableByPayableId(knex: Knex, payableId) {
     return knex('ar_payables as p')
       .select('r.delivery_code', 'r.delivery_date', 'po.purchase_order_id', 'po.purchase_order_number', 'po.purchase_order_book_number',
-        'r.receive_code', 'r.delivery_code', 'ml.labeler_id', knex.raw('sum(rd.cost*rd.receive_qty) as cost'),
+        'r.receive_code', 'r.receive_date', 'r.delivery_code', 'ml.labeler_id', knex.raw('sum(rd.cost*rd.receive_qty) as cost'),
         'ml.labeler_name', 'p.payable_date', 'p.payable_code')
       .join('ar_payable_details as pd', 'p.payable_id', 'pd.payable_id')
       .join('wm_receives as r', 'r.receive_id', 'pd.receive_id')
